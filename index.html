@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Comparador de coches</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d6fd6">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root{--bg:#f6f6f3;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#dcdcd5;--ac:#1d6fd6;--ok:#1a8a4a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--card:#222426;--tx:#ececea;--mu:#9a9a94;--bd:#3a3c3f;--ac:#5aa2ff;--ok:#4cc27d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181a;--card:#222426;--tx:#ececea;--mu:#9a9a94;--bd:#3a3c3f;--ac:#5aa2ff;--ok:#4cc27d;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:12px 16px}
+h1{font-size:20px;margin:4px 0 10px}h2{font-size:16px;margin:0 0 8px}h3{font-size:13px;margin:12px 0 4px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
+section,details.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
+details.box>summary{cursor:pointer;font-weight:600}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{color:var(--mu);font-weight:600}
+input,select,button,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 7px}
+input[type=number]{width:90px}input[type=text]{width:100%}input[type=checkbox]{width:auto}
+button{cursor:pointer}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
+button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:-1px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+.g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:2px}.g input,.g select{width:100%}
+.eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
+.eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
+.bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:150px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
+.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.pg{display:none}.pg.on{display:block}
+textarea{width:100%;height:110px;font:12px monospace}
+a{color:var(--ac)}
+</style>
+</head>
+<body>
+<h1>Comparador de coches <span id="sybadge" class="mu" style="font-weight:400"></span></h1>
+
+<details class="box" id="fbox"><summary id="fsum">Filtros</summary>
+<div class="g" id="filters" style="margin-top:8px"></div>
+<h3>Tipo de motor</h3><div id="ftipo" class="eqg"></div>
+<h3>Equipamiento imprescindible</h3><div id="feq" class="eqg"></div>
+<p class="mu">Un coche sin el dato de un filtro activo queda excluido. <button onclick="S.f={t:[],eq:[]};save();renderAll()">Quitar filtros</button></p>
+</details>
+
+<div class="tabs" id="tabs"></div>
+<section style="border-top-left-radius:0">
+
+<div class="pg" id="pg-base">
+<details class="box" open><summary>Añadir desde un vídeo de YouTube</summary>
+<p class="mu" style="margin:8px 0">Pega uno o varios enlaces (uno por línea): se añaden a la cola y se procesan por detrás, de uno en uno, respetando los límites de uso que pongas en Ajustes. Los datos se fusionan solos en la base. La cola avanza mientras esta página esté abierta; si la cierras, sigue donde se quedó al volver a abrirla.</p>
+<div class="g"><label>Enlaces de YouTube<textarea id="vurl" style="height:58px" placeholder="https://youtube.com/watch?v=..." onpaste="setTimeout(addFromBox,0)"></textarea></label><label>Canal / medio (opcional)<input type="text" id="vcan"></label></div>
+<p><button class="p" onclick="addFromBox()">Añadir a la cola</button> <button id="qtog" onclick="toggleQ()">Pausar cola</button> <button onclick="clearDone()">Quitar terminados</button></p>
+<p class="mu" id="qstat"></p>
+<div class="sc"><table id="qtbl"></table></div>
+<div id="mlog" class="mu"></div>
+<details style="margin-top:10px"><summary class="mu">Modo manual (sin clave de API)</summary>
+<ol class="mu" style="margin:8px 0">
+<li>Pega el enlace aquí debajo y pulsa «Copiar prompt».</li>
+<li>Pégalo en Gemini: devolverá un JSON.</li>
+<li>Pega aquí ese JSON y pulsa «Fusionar».</li>
+</ol>
+<input type="text" id="murl" placeholder="https://youtube.com/watch?v=...">
+<p><button onclick="copyPrompt()">Copiar prompt para Gemini</button></p>
+<textarea id="vjson" placeholder='Pega aquí el JSON de Gemini (un coche o una lista)'></textarea>
+<p><button onclick="doMerge()">Fusionar en la base</button></p>
+</details>
+</details>
+<p class="mu" id="cnt"></p>
+<div class="sc"><table id="tbl"></table></div>
+<p><button onclick="addCar()">+ Añadir coche a mano</button></p>
+<div id="edit"></div>
+</div>
+
+<div class="pg" id="pg-comp">
+<details class="box" open id="pickbox"><summary id="picksum">Elige coches para comparar</summary>
+<p class="mu" style="margin:6px 0">Hasta 5 coches; si marcas un sexto, se quita el primero que elegiste. Solo salen los que pasan los filtros. <button onclick="S.sel=[];save();refresh()">Quitar selección</button></p>
+<div id="pick"></div>
+</details>
+<p class="mu">En verde, el mejor valor de cada fila.</p><div class="sc"><table id="cmp"></table></div></div>
+
+<div class="pg" id="pg-rank">
+<p class="mu">Se puntúan los coches que pasan los filtros. Cada parámetro numérico se normaliza entre el peor y el mejor de ese grupo; un dato que falta se ignora. En equipamiento, lo que falta o es «No» suma 0. Pon peso 0 a lo que no te importe.</p>
+<div class="sc"><table id="rank"></table></div>
+<details class="box" style="margin-top:12px"><summary>Pesos de parámetros (0-10)</summary><div id="wn" class="g" style="margin-top:8px"></div></details>
+<details class="box"><summary>Pesos de equipamiento (0-10)</summary><div id="we" class="g" style="margin-top:8px"></div></details>
+</div>
+
+<div class="pg" id="pg-chart"><select id="cparam" onchange="renderChart()"></select><div id="chart" style="margin-top:8px"></div></div>
+
+<div class="pg" id="pg-set">
+<h2>Sincronización con Google</h2>
+<div class="g"><label>URL del script (termina en /exec)<input type="text" id="syurl" autocomplete="off" onchange="setSy('url',this.value.trim())"></label><label>Clave del script<input type="password" id="sytok" autocomplete="off" onchange="setSy('tok',this.value.trim())"></label></div>
+<p><label class="row" style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="syproc" onchange="setSy('proc',this.checked)">Este dispositivo procesa la cola de vídeos (márcalo solo en el PC)</label></p>
+<p class="mu" id="systat"></p>
+<p><button onclick="syncNow()">Sincronizar ahora</button></p>
+<p class="mu">Coches, ajustes (precios, viajes, pesos) y la cola de vídeos se comparten entre tus dispositivos a través del script de tu cuenta de Google. La URL y la clave se guardan solo en este dispositivo y no se exportan. Filtros, selección para comparar y la clave de Gemini son de cada dispositivo.</p>
+<h2 style="margin-top:14px">Gemini (extracción automática)</h2>
+<div class="g"><label>Clave API de Gemini<input type="password" id="gkey" autocomplete="off" onchange="lsSet(GK,this.value.trim());keyHint();qMsg='';schedule(0)"></label><label>Modelo<input type="text" id="gmodel" onchange="lsSet(GM,this.value.trim());this.value=model()"></label></div>
+<p class="mu" id="ghint"></p>
+<p class="mu">Consíguela gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → «Create API key». Se guarda solo en este navegador y no se incluye al exportar.</p>
+<h3>Límites de uso de la cola</h3>
+<div class="g" id="lims"></div>
+<p class="mu" id="limhint"></p>
+<p class="mu">Cómo se ahorra: antes de cada vídeo se consulta su tamaño en tokens (esa consulta es gratuita) y se salta si supera el máximo por vídeo o no cabe en el presupuesto del día. El vídeo se analiza a baja resolución y con pocos fotogramas por segundo, porque los datos salen sobre todo de lo que se dice. Si Google responde que se ha superado su límite, la cola espera lo que indique y reintenta sola. El contador diario es de este navegador y se reinicia a medianoche (la cuota de Google se reinicia a las 9:00, hora peninsular).</p>
+<h2 style="margin-top:14px">Precios de energía</h2><div class="g" id="prices"></div>
+<h2 style="margin-top:14px">Viajes tipo</h2>
+<div class="sc"><table id="trips"></table></div>
+<p class="mu">% carretera: parte de la energía eléctrica cargada en público (el resto, en casa). El viaje «mixto» (el segundo) define el coste por 100 km. En híbridos enchufables, primero se usa la autonomía eléctrica y el resto es combustible.</p>
+<h2 style="margin-top:14px">Datos</h2>
+<p class="mu">Se guardan en este navegador. Exporta el JSON como copia de seguridad o para llevarlo a otro dispositivo.</p>
+<textarea id="io"></textarea>
+<p><button onclick="exp()">Exportar</button> <button onclick="imp()">Importar (reemplaza todo)</button> <button onclick="if(confirm('¿Borrar toda la base?')){S=def();save();renderAll()}">Reiniciar</button></p>
+</div>
+</section>
+
+<script>
+const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
+// [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
+const NUM=[
+['precio','Precio','€','General','low'],['anio','Año','','General',null],['plazas','Plazas','','General','high'],
+['largo','Largo','mm','Dimensiones','low'],['ancho','Ancho','mm','Dimensiones','low'],['alto','Alto','mm','Dimensiones','low'],['batalla','Batalla','mm','Dimensiones','high'],['altSuelo','Altura libre al suelo','mm','Dimensiones','high'],['peso','Peso','kg','Dimensiones','low'],['mal','Maletero','L','Dimensiones','high'],['malMax','Maletero máx. (asientos abatidos)','L','Dimensiones','high'],['piernasTras','Espacio piernas plazas traseras','mm','Dimensiones','high'],
+['cv','Potencia','CV','Prestaciones','high'],['par','Par motor','Nm','Prestaciones','high'],['acel','0-100 km/h','s','Prestaciones','low'],['vmax','Velocidad máx.','km/h','Prestaciones','high'],
+['kwh100','Consumo eléctrico','kWh/100km','Energía','low'],['l100','Consumo combustible','L/100km','Energía','low'],['bat','Batería útil','kWh','Energía','high'],['rango','Autonomía total WLTP','km','Energía','high'],['rangoE','Autonomía eléctrica (PHEV)','km','Energía','high'],['dc','Potencia carga DC','kW','Energía','high'],['ac','Potencia carga AC','kW','Energía','high'],['c1080','Carga 10-80%','min','Energía','low'],
+['gar','Garantía','años','Garantía y seguridad','high'],['garBat','Garantía batería','años','Garantía y seguridad','high'],['ncap','Euro NCAP','estrellas','Garantía y seguridad','high'],
+['qInt','Calidad interior (obs. probadores)','0-10','Opinión probadores','high'],['confort','Confort de marcha (obs.)','0-10','Opinión probadores','high'],['insonor','Insonorización (obs.)','0-10','Opinión probadores','high'],['dinam','Dinámica de conducción (obs.)','0-10','Opinión probadores','high'],['infotain','Infoentretenimiento (obs.)','0-10','Opinión probadores','high']
+];
+const DER=[['coste100','Coste energía mixto','€/100km','Derivado','low']];
+const ALLN=NUM.concat(DER);
+const EQ=[
+['acc','Control crucero adaptativo','ADAS'],['lka','Mantenimiento de carril','ADAS'],['aeb','Frenada de emergencia','ADAS'],['bsd','Aviso ángulo muerto','ADAS'],['cam360','Cámara 360º','ADAS'],['parkauto','Aparcamiento automático','ADAS'],['l2','Conducción semiautónoma (nivel 2)','ADAS'],['dms','Control de fatiga del conductor','ADAS'],['tsr','Reconocimiento de señales','ADAS'],
+['techo','Techo panorámico','Confort'],['calAs','Asientos calefactados','Confort'],['venAs','Asientos ventilados','Confort'],['elecAs','Asientos eléctricos con memoria','Confort'],['calVol','Volante calefactado','Confort'],['bomba','Bomba de calor','Confort'],['clima2','Climatizador bizona','Confort'],['porton','Portón eléctrico','Confort'],['llave','Acceso sin llave / llave digital','Confort'],['suspAd','Suspensión adaptativa','Confort'],
+['carplay','CarPlay/Android Auto inalámbrico','Tecnología'],['hud','Head-up display','Tecnología'],['cargaInal','Carga inalámbrica de móvil','Tecnología'],['ota','Actualizaciones OTA','Tecnología'],['v2l','V2L (alimentar aparatos)','Tecnología'],['cuadroDig','Cuadro de instrumentos digital','Tecnología'],
+['matrix','Faros matriz LED','Luces y sonido'],['sonido','Sonido premium','Luces y sonido'],['ambiente','Luz ambiental','Luces y sonido'],
+['enganche','Enganche de remolque','Mecánica'],['tracc4','Tracción total','Mecánica'],['pedal','Regeneración / one-pedal','Mecánica']
+];
+// filtros: [id, etiqueta, clave coche, modo]
+const FL=[['pMin','Precio mín (€)','precio','min'],['pMax','Precio máx (€)','precio','max'],['cvMin','Potencia mín (CV)','cv','min'],['cvMax','Potencia máx (CV)','cv','max'],['largoMax','Largo máx (mm)','largo','max'],['anchoMax','Ancho máx (mm)','ancho','max'],['altoMax','Alto máx (mm)','alto','max'],['malMin','Maletero mín (L)','mal','min'],['rangoMin','Autonomía mín (km)','rango','min'],['plazasMin','Plazas mín','plazas','min'],['acelMax','0-100 máx (s)','acel','max'],['dcMin','Carga DC mín (kW)','dc','min']];
+const TABS=[['base','Base de datos'],['comp','Comparar'],['rank','Ranking'],['chart','Gráficos'],['set','Ajustes']];
+
+function def(){return{pr:{gas:1.55,die:1.45,casa:0.15,pub:0.55},trips:[{n:'Ciudad diaria',km:30,road:0},{n:'Mixto semanal',km:150,road:30},{n:'Viaje largo',km:600,road:90}],wN:{precio:5,coste100:5,mal:3,rango:3,cv:2,qInt:3,confort:3},wE:{acc:3,aeb:5},cars:[],del:{},cfgT:0,nid:1,f:{t:[],eq:[]},sel:[],edit:null,tab:'base'}}
+let S;try{S=JSON.parse(localStorage.getItem('cmp2')||'null')}catch(e){}
+if(!S||!S.cars)S=def();S.f=S.f||{t:[],eq:[]};S.f.t=S.f.t||[];S.f.eq=S.f.eq||[];S.sel=S.sel||[];S.del=S.del||{};if(!S.cfgT&&S.cars.length)S.cfgT=1;
+// Abierta desde el servidor local (127.0.0.1/localhost:8765), además guarda la base en datos.json de la carpeta.
+const FSYNC=/^(127\.0\.0\.1|localhost)$/.test(location.hostname)&&location.port==='8765';let fsT=null;
+function fileSync(){if(!FSYNC||!S.cars.length)return;/* una base vacía nunca pisa el archivo */clearTimeout(fsT);fsT=setTimeout(()=>{fetch('/save',{method:'POST',body:JSON.stringify(S)}).catch(()=>{})},1500)}
+function rawSave(){try{localStorage.setItem('cmp2',JSON.stringify(S))}catch(e){}try{localStorage.setItem('cmp2_q',JSON.stringify(Q))}catch(e){}fileSync()}
+function save(){if(trackAll())schedSync();rawSave()}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
+const fmt=v=>v==null?'–':(+(+v).toFixed(2)).toLocaleString('es-ES');
+const nm=c=>[c.marca,c.modelo,c.version].filter(Boolean).join(' ')||'(sin nombre)';
+const byId=id=>S.cars.find(c=>c.id===id);
+
+/* ---- costes ---- */
+function tripCost(c,tr){const r=tr.road/100,km=tr.km,fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
+ const el=k=>c.kwh100!=null?k*c.kwh100/100*((1-r)*S.pr.casa+r*S.pr.pub):null;
+ const fu=k=>c.l100!=null?k*c.l100/100*fp:null;
+ if(c.t==='BEV')return el(km);
+ if(c.t==='PHEV'){const ek=Math.min(km,c.rangoE||0),e=el(ek),f=fu(km-ek);return(e==null||f==null)?null:e+f}
+ if(c.t==='HEV'||c.t==='Gasolina'||c.t==='Diésel')return fu(km);
+ return null}
+function val(c,k){if(k==='coste100'){const tr=S.trips[1]||S.trips[0];if(!tr)return null;const v=tripCost(c,tr);return v==null?null:v/tr.km*100}return num(c[k])}
+
+/* ---- filtros ---- */
+function filt(){const f=S.f;return S.cars.filter(c=>{
+ if(f.t.length&&!f.t.includes(c.t))return false;
+ if(f.carroc&&!(c.carroc||'').toLowerCase().includes(f.carroc.toLowerCase()))return false;
+ for(const [id,,key,mode] of FL){const lim=num(f[id]);if(lim==null)continue;const v=num(c[key]);if(v==null)return false;if(mode==='min'&&v<lim)return false;if(mode==='max'&&v>lim)return false}
+ for(const e of f.eq)if(!c.eq||c.eq[e]!==true)return false;
+ return true})}
+function renderFilters(){
+ $('filters').innerHTML=FL.map(([id,l])=>`<label>${l}<input type="number" step="any" value="${S.f[id]??''}" onchange="S.f['${id}']=num(this.value);save();refresh()"></label>`).join('')+`<label>Carrocería contiene<input type="text" value="${esc(S.f.carroc||'')}" onchange="S.f.carroc=this.value;save();refresh()"></label>`;
+ $('ftipo').innerHTML=T.map(t=>`<label class="row"><input type="checkbox" ${S.f.t.includes(t)?'checked':''} onchange="tog(S.f.t,'${t}',this.checked);save();refresh()">${t}</label>`).join('');
+ $('feq').innerHTML=EQ.map(e=>`<label class="row"><input type="checkbox" ${S.f.eq.includes(e[0])?'checked':''} onchange="tog(S.f.eq,'${e[0]}',this.checked);save();refresh()">${esc(e[1])}</label>`).join('')}
+function tog(a,v,on){const i=a.indexOf(v);if(on&&i<0)a.push(v);if(!on&&i>=0)a.splice(i,1)}
+function nActive(){return FL.filter(x=>num(S.f[x[0]])!=null).length+(S.f.t.length?1:0)+(S.f.carroc?1:0)+S.f.eq.length}
+
+/* ---- tabs ---- */
+function renderTabs(){$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab ${S.tab===k?'on':''}" onclick="S.tab='${k}';save();renderTabs();showTab()">${l}</button>`).join('');showTab()}
+function showTab(){TABS.forEach(([k])=>$('pg-'+k).classList.toggle('on',S.tab===k))}
+
+/* ---- base de datos ---- */
+function completeness(c){const n=NUM.length+EQ.length;let h=0;NUM.forEach(x=>{if(num(c[x[0]])!=null)h++});EQ.forEach(e=>{if(c.eq&&typeof c.eq[e[0]]==='boolean')h++});return Math.round(100*h/n)}
+function renderTable(){const L=filt();$('cnt').textContent=`${L.length} de ${S.cars.length} coches (filtros activos: ${nActive()})`;$('fsum').textContent=`Filtros (${nActive()} activos)`;
+ if(!S.cars.length){$('tbl').innerHTML='<tr><td>Base vacía. Añade tu primer coche desde un vídeo o a mano.</td></tr>';return}
+ $('tbl').innerHTML='<tr><th>Comparar</th><th>Coche</th><th>Tipo</th><th>Precio €</th><th>CV</th><th>Largo mm</th><th>Maletero L</th><th>Autonomía km</th><th>€/100 km</th><th>Datos</th><th>Fuentes</th><th></th></tr>'+
+ L.map(c=>`<tr><td><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"></td><td><a href="#" onclick="openEdit(${c.id});return false">${esc(nm(c))}</a></td><td>${esc(c.t||'–')}</td><td>${fmt(c.precio)}</td><td>${fmt(c.cv)}</td><td>${fmt(c.largo)}</td><td>${fmt(c.mal)}</td><td>${fmt(c.rango)}</td><td>${fmt(val(c,'coste100'))}</td><td>${completeness(c)}%</td><td>${(c.src||[]).length}</td><td><button onclick="delCar(${c.id})">✕</button></td></tr>`).join('')}
+function selCar(id,on){tog(S.sel,id,on);if(S.sel.length>5)S.sel.shift();renderTable();save();renderCompare()}
+function delCar(id){if(!confirm('¿Borrar este coche?'))return;S.cars=S.cars.filter(c=>c.id!==id);S.sel=S.sel.filter(x=>x!==id);if(S.edit===id)S.edit=null;save();renderAll()}
+function addCar(){const c={id:newId(),eq:{},src:[],notas:[],t:'BEV',modelo:'Nuevo coche'};S.cars.push(c);S.edit=c.id;save();renderAll();$('edit').scrollIntoView()}
+function openEdit(id){S.edit=id;renderEdit();$('edit').scrollIntoView()}
+function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
+ const grp=[...new Set(NUM.map(n=>n[3]))];
+ $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
+ <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
+ grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label>${n[1]}${n[2]?' ('+n[2]+')':''}<input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
+ [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
+ `<h3>Fuentes</h3>${(c.src||[]).map(s=>`<div class="mu"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.canal||s.url)}</a> ${esc(s.fecha||'')}</div>`).join('')||'<div class="mu">Sin fuentes</div>'}
+ ${(c.notas||[]).length?`<h3>Notas de los vídeos</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}
+ <p><button onclick="S.edit=null;renderEdit()">Cerrar</button></p></details>`}
+function setF(id,k,v){const c=byId(id);if(!c)return;c[k]=v;save();refresh()}
+function setE(id,k,v){const c=byId(id);c.eq=c.eq||{};if(v==='')delete c.eq[k];else c.eq[k]=v==='s';save();refresh()}
+
+/* ---- importar desde vídeo (Gemini) ---- */
+const firstUrl=()=>$('murl').value.trim();
+function promptText(u){const url=u||firstUrl()||'[ENLACE DEL VÍDEO]';
+ const nums=NUM.map(n=>`  "${n[0]}": null   // ${n[1]}${n[2]?' ('+n[2]+')':''}`).join('\n');
+ const eqs=EQ.map(e=>`    "${e[0]}": null   // ${e[1]}`).join('\n');
+ return `Analiza este vídeo de YouTube (usa sus subtítulos / transcripción): ${url}
+
+Extrae los datos de CADA coche que se presenta o prueba y devuélvelos SOLO como JSON válido (un objeto por coche, dentro de una lista), sin texto adicional.
+
+Reglas:
+- Usa únicamente lo que se dice o se muestra en el vídeo. Si algo no se menciona, pon null. No inventes ni completes con conocimiento propio.
+- Números sin unidades (punto decimal). Usa las unidades indicadas en cada comentario.
+- "t" solo puede ser: BEV, PHEV, HEV, Gasolina o Diésel.
+- En "eq": true solo si se dice que el coche lo lleva; false solo si se dice expresamente que no lo tiene; si no se menciona, null.
+- Los campos de opinión (qInt, confort, insonor, dinam, infotain) son notas de 0 a 10 SOLO si el probador da una valoración clara; si no, null.
+- "notas": hasta 10 datos objetivos o hechos relevantes que no encajen en los campos (máx. 15 palabras cada uno).
+- "fuente": url, canal y fecha de publicación del vídeo.
+
+Formato de cada coche:
+{
+  "marca": "", "modelo": "", "version": "", "carroc": "", "t": null,
+${nums},
+  "eq": {
+${eqs}
+  },
+  "notas": [],
+  "fuente": {"url": "", "canal": "", "fecha": ""}
+}`}
+function copyPrompt(){const t=promptText();const done=()=>{$('mlog').textContent='Prompt copiado. Pégalo en Gemini.'};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(done,()=>{$('vjson').value=t;$('mlog').textContent='No pude copiar al portapapeles: el prompt está en la caja de texto, cópialo desde ahí.'});
+ else{$('vjson').value=t;$('mlog').textContent='El prompt está en la caja de texto, cópialo desde ahí.'}}
+function normT(v){if(!v)return null;const s=String(v).toLowerCase().replace('é','e');return T.find(t=>t.toLowerCase().replace('é','e')===s)||null}
+function keyOf(o){return[o.marca,o.modelo,o.version].map(x=>String(x||'').toLowerCase().trim()).join('|')}
+function mergeOne(o,url,canal){if(!o||typeof o!=='object'||!o.modelo)return null;
+ let c=S.cars.find(x=>keyOf(x)===keyOf(o)),isNew=!c,ch=[];
+ if(!c){c={id:newId(),eq:{},src:[],notas:[]};S.cars.push(c)}
+ ['marca','modelo','version','carroc'].forEach(k=>{if(o[k]&&c[k]!==o[k]){if(c[k])ch.push(`${k}: ${c[k]} → ${o[k]}`);c[k]=o[k]}});
+ const t=normT(o.t);if(t&&c.t!==t){if(c.t&&!isNew)ch.push(`Tipo: ${c.t} → ${t}`);c.t=t}
+ NUM.forEach(n=>{const v=num(o[n[0]]);if(v!=null){if(c[n[0]]!=null&&c[n[0]]!==v)ch.push(`${n[1]}: ${c[n[0]]} → ${v}`);c[n[0]]=v}});
+ c.eq=c.eq||{};Object.entries(o.eq||{}).forEach(([k,v])=>{if(typeof v==='boolean'&&EQ.some(e=>e[0]===k)){if(c.eq[k]!==undefined&&c.eq[k]!==v)ch.push(`${EQ.find(e=>e[0]===k)[1]}: ${c.eq[k]?'Sí':'No'} → ${v?'Sí':'No'}`);c.eq[k]=v}});
+ const f=o.fuente||{},u=f.url||url;c.src=c.src||[];if(u&&!c.src.some(s=>s.url===u))c.src.push({url:u,canal:f.canal||canal||'',fecha:f.fecha||''});
+ c.notas=c.notas||[];(Array.isArray(o.notas)?o.notas:[]).forEach(n=>{if(typeof n==='string'&&n&&!c.notas.includes(n))c.notas.push(n)});
+ return{c,isNew,ch}}
+// Devuelve la lista de líneas de resultado (HTML). Lanza error si el JSON no es válido.
+function mergeText(txt,url,canal){txt=String(txt).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
+ let d=JSON.parse(txt);if(!Array.isArray(d))d=Array.isArray(d.coches)?d.coches:[d];
+ const out=[];d.forEach(o=>{const r=mergeOne(o,url,canal);if(r)out.push(`<div>${r.isNew?'<b>Nuevo</b>':'<b>Actualizado</b>'}: ${esc(nm(r.c))}${r.ch.length?'<br>&nbsp;&nbsp;Cambios: '+r.ch.map(esc).join('; '):''}</div>`)});
+ save();renderAll();return out}
+function doMerge(){let out;
+ try{out=mergeText($('vjson').value,firstUrl(),$('vcan').value.trim())}catch(e){$('mlog').textContent='JSON no válido. Comprueba que has pegado solo la respuesta de Gemini.';return}
+ $('mlog').innerHTML=out.join('')||'No se encontró ningún coche válido (falta el campo «modelo»).';if(out.length)$('vjson').value=''}
+
+/* ---- extracción automática con la API de Gemini ---- */
+const GK='cmp2_gk',GM='cmp2_gm',DEF_MODEL='gemini-3.8-flash';
+function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
+function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}
+const model=()=>lsGet(GM)||DEF_MODEL;
+function keyHint(){$('ghint').innerHTML=lsGet(GK)?'<span class="best">Clave guardada.</span> Los enlaces que añadas a la cola se procesan solos.':'Sin clave: la cola no procesa nada (puedes usar el modo manual).'}
+function ytId(u){const m=String(u||'').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:null}
+
+/* ---- cola de vídeos ---- */
+const QK='cmp2_q',UK='cmp2_use',LK='cmp2_lim';
+function lsJ(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function lsJs(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+// [clave, etiqueta, mín, máx, paso]
+const LIMF=[['dayTok','Tokens máx. al día',10000,100000000,10000],['vidTok','Tokens máx. por vídeo',5000,5000000,5000],['dayReq','Vídeos máx. al día',1,1000,1],['gap','Segundos entre vídeos',5,3600,5],['fps','Fotogramas por segundo analizados',0.05,1,0.05]];
+const LDEF={dayTok:1000000,vidTok:200000,dayReq:20,gap:60,fps:0.5,low:true};
+let LIM=Object.assign({},LDEF,lsJ(LK,{}));
+let Q=lsJ(QK,null);if(!Q||!Array.isArray(Q.items))Q={items:[],paused:false,last:0};Q.qdel=Q.qdel||{};
+function saveQ(){save()}
+const today=()=>new Date().toLocaleDateString('sv');
+function usage(){let u=lsJ(UK,null);if(!u||u.day!==today())u={day:today(),tok:0,req:0};return u}
+function addUse(tok,req){const u=usage();u.tok+=tok||0;u.req+=req||0;lsJs(UK,u)}
+function msToMidnight(){const d=new Date();d.setHours(24,0,30,0);return d-Date.now()}
+const fmtK=v=>v==null?'–':v>=1e6?(v/1e6).toLocaleString('es-ES',{maximumFractionDigits:2})+' M':v>=1e3?Math.round(v/1e3).toLocaleString('es-ES')+' k':String(v);
+const fmtT=ms=>{const s=Math.max(0,Math.round(ms/1000));return s<90?s+' s':s<5400?Math.round(s/60)+' min':(s/3600).toFixed(1).replace('.',',')+' h'};
+let qTimer=null,qBusy=false,qMsg='',qTick=null;
+
+function addFromBox(){const txt=$('vurl').value,canal=$('vcan').value.trim();
+ const ids=[...new Set((txt.match(/\S+/g)||[]).map(ytId).filter(Boolean))];
+ if(!ids.length){if(txt.trim())$('mlog').textContent='No he encontrado ningún enlace de YouTube en el texto.';return}
+ let add=0,dup=[];
+ ids.forEach(id=>{const q=Q.items.find(x=>x.yt===id&&x.st!=='err'&&x.st!=='skip');
+  const inDb=S.cars.some(c=>(c.src||[]).some(s=>ytId(s.url)===id));
+  if(q||inDb){dup.push(id);return}
+  Q.items=Q.items.filter(x=>x.yt!==id);
+  Q.items.push({yt:id,url:'https://www.youtube.com/watch?v='+id,canal,st:'pend',msg:'',added:Date.now()});add++});
+ saveQ();$('vurl').value='';
+ $('mlog').textContent=(add?`${add} vídeo${add>1?'s':''} añadido${add>1?'s':''} a la cola.`:'')+(dup.length?` ${dup.length} ya estaba${dup.length>1?'n':''} en la cola o en la base (para repetirlo, quítalo de la cola o borra su fuente).`:'');
+ renderQ();schedule(300)}
+function toggleQ(){Q.paused=!Q.paused;saveQ();renderQ();if(!Q.paused)schedule(0)}
+function clearDone(){Q.items=Q.items.filter(x=>x.st!=='ok'&&x.st!=='skip');saveQ();renderQ()}
+function qRetry(id){const x=Q.items.find(i=>i.yt===id);if(!x||x.st==='proc')return;x.st='pend';x.next=0;x.msg='';x.tries=0;x.force=true;saveQ();renderQ();schedule(0)}
+function qDel(id){Q.items=Q.items.filter(i=>i.yt!==id||i.st==='proc');saveQ();renderQ()}
+function schedule(ms){clearTimeout(qTimer);qTimer=setTimeout(runQ,Math.max(0,ms))}
+
+function reqBody(url,opt){const part={fileData:{fileUri:url}},gc={responseMimeType:'application/json',temperature:0.1};
+ if(opt){part.videoMetadata={fps:LIM.fps};if(LIM.low)gc.mediaResolution='MEDIA_RESOLUTION_LOW';gc.thinkingConfig={thinkingLevel:'low'}}
+ return{contents:[{role:'user',parts:[part,{text:promptText(url)}]}],generationConfig:gc}}
+async function gapi(method,body){
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model())}:${method}`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':lsGet(GK)},body:JSON.stringify(body)});
+ const j=await r.json().catch(()=>null);
+ if(!r.ok){const er=(j&&j.error)||{},ri=(er.details||[]).find(d=>/RetryInfo/.test(d['@type']||''));
+  const qf=(er.details||[]).filter(d=>/QuotaFailure/.test(d['@type']||'')).flatMap(d=>d.violations||[]).map(v=>v.quotaId||v.quotaMetric||'').join(' ');
+  throw{status:r.status,msg:String(er.message||('error HTTP '+r.status)).replace(/\.+$/,''),retry:ri?parseFloat(ri.retryDelay):null,daily:/per ?day|PerDay|daily/i.test(qf+' '+(er.message||''))}}
+ return j}
+const optErr=e=>e.status===400&&/media_?resolution|video_?metadata|fps|thinking|Unknown name|Invalid JSON payload/i.test(e.msg);
+async function countTok(url){for(const opt of[true,false]){try{const m='models/'+model(),b=reqBody(url,opt);const j=await gapi('countTokens',{generateContentRequest:Object.assign({model:m},b)});return{tok:j.totalTokens,opt}}catch(e){if(opt&&optErr(e))continue;if(e.status===400||e.status===403||e.status===404)throw e;return{tok:null,opt}}}}
+
+async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
+ if(Q.paused){qMsg='Cola en pausa.';return renderQ()}
+ if(syOn()&&!SY.proc){qMsg='Este dispositivo no procesa la cola: se encarga el que tenga marcada esa opción en Ajustes (el PC).';return renderQ()}
+ Q.items.forEach(x=>{if(x.st==='proc'&&x.by!==DEV&&Date.now()-(x.u||0)>20*60000){x.st='pend';x.msg='Retomado: el dispositivo que lo procesaba dejó de responder'}});
+ if(!lsGet(GK)){qMsg='Cola detenida: falta la clave de Gemini en Ajustes.';return renderQ()}
+ const pend=Q.items.filter(x=>x.st==='pend');if(!pend.length){qMsg='';return renderQ()}
+ const it=pend.find(x=>!x.next||x.next<=Date.now());
+ if(!it){const w=Math.min(...pend.map(x=>x.next))-Date.now();qMsg='Esperando para reintentar: '+fmtT(w)+'.';renderQ();return schedule(w+500)}
+ const wait=(Q.last||0)+LIM.gap*1000-Date.now();
+ if(wait>0){qMsg='Siguiente vídeo en '+fmtT(wait)+' (pausa entre vídeos).';renderQ();return schedule(Math.min(wait,1000)+50)}
+ const u=usage();
+ if(u.req>=LIM.dayReq||u.tok>=LIM.dayTok){qMsg='Límite diario alcanzado ('+(u.req>=LIM.dayReq?'vídeos':'tokens')+'). Se reanuda a medianoche.';renderQ();return schedule(Math.min(msToMidnight(),3600000))}
+ qBusy=true;it.st='proc';it.by=DEV;it.msg='Consultando tamaño del vídeo…';qMsg='Procesando…';saveQ();renderQ();
+ try{
+  const c=await countTok(it.url);it.est=c.tok;
+  if(c.tok!=null&&!it.force){
+   if(c.tok>LIM.vidTok){it.st='skip';it.msg=`Saltado: ~${fmtK(c.tok)} tokens, más que el máximo por vídeo (${fmtK(LIM.vidTok)}). «Reintentar» lo procesa igualmente.`;return}
+   if(u.tok+c.tok>LIM.dayTok){it.st='pend';it.next=Date.now()+msToMidnight();it.msg=`Esperando a mañana: ~${fmtK(c.tok)} tokens no caben en lo que queda hoy.`;return}}
+  it.msg='Gemini está viendo el vídeo'+(c.tok!=null?` (~${fmtK(c.tok)} tokens)`:'')+'…';it.t0=Date.now();renderQ();
+  qTick=setInterval(()=>{const el=document.getElementById('qrun');if(el)el.textContent=fmtT(Date.now()-it.t0)},1000);
+  Q.last=Date.now();saveQ();
+  let j;try{j=await gapi('generateContent',reqBody(it.url,c.opt))}catch(e){if(c.opt&&optErr(e)){j=await gapi('generateContent',reqBody(it.url,false))}else throw e}
+  const um=j.usageMetadata||{},tok=um.totalTokenCount||c.tok||0;addUse(tok,1);it.tok=tok;
+  const cand=j.candidates&&j.candidates[0],txt=((cand&&cand.content&&cand.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+  if(!txt){it.st='err';it.msg='Gemini no devolvió datos'+(cand&&cand.finishReason?' ('+cand.finishReason+')':'');return}
+  let out;try{out=mergeText(txt,it.url,it.canal||'')}catch(e){$('vjson').value=txt;it.st='err';it.msg='La respuesta no es un JSON válido (la he dejado en el modo manual para revisarla)';return}
+  it.st='ok';it.msg=out.length?out.map(h=>h.replace(/<br>.*$/,'').replace(/<[^>]+>/g,'')).join(' · '):'No se encontró ningún coche en el vídeo';it.res=out.join('');
+ }catch(e){
+  if(e&&e.status===429){it.st='pend';it.tries=(it.tries||0)+1;
+   const w=e.daily?3600000:Math.max(15,e.retry||60*it.tries)*1000;it.next=Date.now()+w;
+   it.msg=(e.daily?'Cuota diaria de Google agotada':'Límite por minuto de Google')+'; reintento en '+fmtT(w)+'.'}
+  else if(e&&([500,502,503,504].includes(e.status)||e instanceof TypeError)&&(it.tries||0)<6){
+   // Google saturado o sin conexión: es temporal, se reintenta esperando cada vez más (2, 5, 15, 30, 60, 120 min)
+   const w=[2,5,15,30,60,120][it.tries||0]*60000;it.tries=(it.tries||0)+1;it.st='pend';it.next=Date.now()+w;
+   it.msg=(e.status===503?'Gemini está saturado (alta demanda)':e instanceof TypeError?'Sin conexión con Google':'Fallo temporal de Google')+`; reintento ${it.tries} de 6 en ${fmtT(w)}.`}
+  else{it.st='err';it.msg='Error: '+((e&&e.msg)||(e&&e.message)||String(e))}
+ }finally{clearInterval(qTick);delete it.force;qBusy=false;saveQ();renderQ();schedule(500)}}
+
+const QST={pend:['⏳','Pendiente'],proc:['⚙️','Procesando'],ok:['✅','Hecho'],err:['❌','Error'],skip:['⏭️','Saltado']};
+function renderQ(){if(!$('qtbl'))return;const u=usage();
+ const n=k=>Q.items.filter(x=>x.st===k).length;
+ $('qtog').textContent=Q.paused?'Reanudar cola':'Pausar cola';
+ $('qstat').innerHTML=`Hoy: <b>${fmtK(u.tok)}</b> de ${fmtK(LIM.dayTok)} tokens · <b>${u.req}</b> de ${LIM.dayReq} vídeos`+(Q.items.length?` · Cola: ${n('pend')+n('proc')} pendientes, ${n('ok')} hechos${n('err')?', '+n('err')+' con error':''}${n('skip')?', '+n('skip')+' saltados':''}`:'')+(qMsg?`<br>${esc(qMsg)}`:'');
+ $('qtbl').innerHTML=Q.items.length?'<tr><th></th><th>Vídeo</th><th>Estado</th><th>Tokens</th><th></th></tr>'+Q.items.map(x=>`<tr><td>${QST[x.st][0]}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.yt)}</a>${x.canal?' <span class="mu">'+esc(x.canal)+'</span>':''}</td><td style="white-space:normal;min-width:220px">${QST[x.st][1]}${x.st==='proc'?' <span class="mu" id="qrun"></span>':''}${x.msg?'<div class="mu">'+esc(x.msg)+'</div>':''}</td><td>${x.tok?fmtK(x.tok):x.est?'~'+fmtK(x.est):'–'}</td><td>${x.st==='err'||x.st==='skip'||(x.st==='pend'&&x.next>Date.now())?`<button onclick="qRetry('${x.yt}')">${x.st==='pend'?'Ya':'Reintentar'}</button> `:''}${x.st!=='proc'?`<button onclick="qDel('${x.yt}')">✕</button>`:''}</td></tr>`).join(''):''}
+function renderLims(){
+ $('lims').innerHTML=LIMF.map(([k,l,mi,ma,st])=>`<label>${l}<input type="number" min="${mi}" max="${ma}" step="${st}" value="${LIM[k]}" onchange="setLim('${k}',this.value,${mi},${ma})"></label>`).join('')+`<label class="row" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${LIM.low?'checked':''} onchange="LIM.low=this.checked;lsJs(LK,LIM);renderLims()">Vídeo a baja resolución</label>`;
+ const ps=Math.round((LIM.low?66:258)*LIM.fps+32);
+ $('limhint').innerHTML=`Con estos ajustes, un vídeo gasta aprox. <b>${fmtK(ps*60)} tokens por minuto</b>: uno de 15 min ≈ ${fmtK(ps*900)} tokens. El máximo por vídeo equivale a unos ${Math.round(LIM.vidTok/ps/60)} min de vídeo. <button onclick="LIM=Object.assign({},LDEF);lsJs(LK,LIM);renderLims();renderQ()">Valores por defecto</button>`}
+function setLim(k,v,mi,ma){v=num(v);if(v==null)v=LDEF[k];LIM[k]=Math.min(ma,Math.max(mi,v));lsJs(LK,LIM);renderLims();renderQ();schedule(0)}
+
+
+/* ---- sincronización con Google (script en tu cuenta) ---- */
+/* SYNC-MERGE-INICIO */
+function emptyDoc() { return { v: 1, cars: [], del: {}, cfg: null, queue: [], qdel: {} }; }
+function normDoc(d) {
+  d = d && typeof d === 'object' ? d : {};
+  return {
+    v: 1,
+    cars: Array.isArray(d.cars) ? d.cars : [],
+    del: d.del && typeof d.del === 'object' ? d.del : {},
+    cfg: d.cfg && typeof d.cfg === 'object' ? d.cfg : null,
+    queue: Array.isArray(d.queue) ? d.queue : [],
+    qdel: d.qdel && typeof d.qdel === 'object' ? d.qdel : {}
+  };
+}
+function ytIdOf(u) {
+  const m = String(u || '').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([\w-]{11})/);
+  return m ? m[1] : null;
+}
+// Une dos versiones: en cada coche / vídeo gana el cambio más reciente (campo «u»);
+// los borrados (del / qdel) ganan si son posteriores al último cambio.
+function mergeDoc(a, b) {
+  a = normDoc(a); b = normDoc(b);
+  const maxMap = (x, y) => { const r = Object.assign({}, x); Object.keys(y).forEach(k => { r[k] = Math.max(r[k] || 0, y[k] || 0); }); return r; };
+  const pick = (list, key) => {
+    const m = new Map();
+    list.forEach(it => { if (!it) return; const k = String(it[key]); const o = m.get(k); if (!o || (it.u || 0) > (o.u || 0)) m.set(k, it); });
+    return Array.from(m.values());
+  };
+  const del = maxMap(a.del, b.del), qdel = maxMap(a.qdel, b.qdel);
+  // Solo se descarta lo que tiene un borrado registrado posterior (o igual) a su último cambio.
+  const gone = (t, u) => t != null && t >= (u || 0);
+  const cars = pick(a.cars.concat(b.cars), 'id').filter(c => !gone(del[c.id], c.u));
+  const queue = pick(a.queue.concat(b.queue), 'yt').filter(q => !gone(qdel[q.yt], q.u));
+  const cfg = !a.cfg ? b.cfg : !b.cfg ? a.cfg : ((b.cfg.t || 0) > (a.cfg.t || 0) ? b.cfg : a.cfg);
+  return { v: 1, cars: cars, del: del, cfg: cfg, queue: queue, qdel: qdel };
+}
+// Añade enlaces a la cola compartida (sin duplicados). Devuelve cuántos añadió.
+function addLinks(doc, links) {
+  const now = Date.now();
+  let n = 0;
+  links.forEach(l => {
+    const yt = ytIdOf(l && l.url);
+    if (!yt) return;
+    const q = doc.queue.find(x => x.yt === yt);
+    if (q && q.st !== 'err' && q.st !== 'skip') return;
+    if (doc.cars.some(c => (c.src || []).some(s => ytIdOf(s.url) === yt))) return;
+    doc.queue = doc.queue.filter(x => x.yt !== yt);
+    doc.queue.push({ yt: yt, url: 'https://www.youtube.com/watch?v=' + yt, canal: String((l && l.canal) || '').slice(0, 80), st: 'pend', msg: '', added: now, u: now });
+    n++;
+  });
+  return n;
+}
+/* SYNC-MERGE-FIN */
+const SYK='cmp2_sync',DEVK='cmp2_dev';
+let SY=Object.assign({url:'',tok:'',proc:!(window.matchMedia&&matchMedia('(pointer:coarse)').matches)},lsJ(SYK,{}));
+let DEV=lsGet(DEVK);if(!DEV){DEV=Math.random().toString(36).slice(2,10);lsSet(DEVK,DEV)}
+const syOn=()=>!!(SY.url&&SY.tok);
+const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
+// Huellas del último estado conocido: si algo cambia, se le pone la hora (u) para saber qué versión es más nueva.
+let snapC=new Map(),snapCfg='',snapQ=new Map();
+const sansU=o=>{const r=Object.assign({},o);delete r.u;return JSON.stringify(r)};
+const cfgKey=()=>JSON.stringify([S.pr,S.trips,S.wN,S.wE]);
+function snapAll(){snapC=new Map(S.cars.map(c=>[String(c.id),sansU(c)]));snapCfg=cfgKey();snapQ=new Map(Q.items.map(x=>[x.yt,sansU(x)]))}
+function trackAll(){const now=Date.now();let ch=false;S.del=S.del||{};Q.qdel=Q.qdel||{};
+ const seen=new Set();S.cars.forEach(c=>{const k=String(c.id),v=sansU(c);seen.add(k);if(snapC.get(k)!==v){c.u=now;snapC.set(k,v);ch=true}});
+ [...snapC.keys()].forEach(k=>{if(!seen.has(k)){S.del[k]=now;snapC.delete(k);ch=true}});
+ const ck=cfgKey();if(ck!==snapCfg){S.cfgT=now;snapCfg=ck;ch=true}
+ const sq=new Set();Q.items.forEach(x=>{const v=sansU(x);sq.add(x.yt);if(snapQ.get(x.yt)!==v){x.u=now;snapQ.set(x.yt,v);ch=true}});
+ [...snapQ.keys()].forEach(k=>{if(!sq.has(k)){Q.qdel[k]=now;snapQ.delete(k);ch=true}});
+ return ch}
+const localDoc=()=>({v:1,cars:S.cars,del:S.del||{},cfg:{pr:S.pr,trips:S.trips,wN:S.wN,wE:S.wE,t:S.cfgT||0},queue:Q.items,qdel:Q.qdel||{}});
+function applyDoc(d){const cur=qBusy?Q.items.find(x=>x.st==='proc'&&x.by===DEV):null;
+ S.cars=d.cars;S.del=d.del;
+ if(d.cfg&&(d.cfg.t||0)>(S.cfgT||0)){S.pr=d.cfg.pr;S.trips=d.cfg.trips;S.wN=d.cfg.wN;S.wE=d.cfg.wE;S.cfgT=d.cfg.t}
+ Q.items=d.queue;Q.qdel=d.qdel;
+ if(cur){const i=Q.items.findIndex(x=>x.yt===cur.yt);if(i>=0)Q.items[i]=cur}}
+let syncing=false,syncAgain=false,syncT=null,syMsg='',syOk=0;
+function schedSync(ms){if(!syOn())return;clearTimeout(syncT);syncT=setTimeout(syncNow,ms==null?2500:ms)}
+async function syncNow(){if(!syOn())return;if(syncing){syncAgain=true;return}
+ syncing=true;clearTimeout(syncT);setSy2('Sincronizando…');
+ try{trackAll();
+  const r=await fetch(SY.url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SY.tok,op:'sync',doc:localDoc()})});
+  const j=await r.json().catch(()=>null);
+  if(!j)throw new Error('respuesta no válida (¿URL correcta?)');
+  if(!j.ok)throw new Error(j.error==='clave'?'clave incorrecta':j.error==='ocupado'?'el servicio está ocupado, se reintenta':j.error);
+  trackAll();const before=JSON.stringify(localDoc());
+  applyDoc(mergeDoc(localDoc(),j.doc));
+  const changed=JSON.stringify(localDoc())!==before;
+  rawSave();snapAll();syOk=Date.now();
+  setSy2('Sincronizado a las '+new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}));
+  if(changed){const a=document.activeElement,typing=a&&/^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
+   if(typing){refresh();renderQ()}else renderAll();schedule(500)}
+ }catch(e){setSy2('Sin sincronizar: '+(e instanceof TypeError?'sin conexión con Google, se reintenta en 1 min':(e&&e.message||e)));if(syncAgain===false)schedSync(60000)}
+ finally{syncing=false;if(syncAgain){syncAgain=false;schedSync(500)}}}
+function setSy2(m){syMsg=m;const b=$('sybadge');if(b){b.textContent=syOn()?'☁ '+m:'';b.style.color=/^Sin sincronizar/.test(m)?'#c0392b':''}const s=$('systat');if(s)s.textContent=syOn()?m:'Sin configurar: los datos solo están en este navegador.'}
+function setSy(k,v){SY[k]=v;lsJs(SYK,SY);renderSy();if(k!=='proc')syncNow();schedule(0)}
+function renderSy(){if(!$('syurl'))return;$('syurl').value=SY.url;$('sytok').value=SY.tok;$('syproc').checked=!!SY.proc;setSy2(syMsg||(syOn()?'Pendiente de sincronizar':''))}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
+setInterval(()=>{if(document.visibilityState==='visible'||SY.proc)syncNow()},60000);
+
+/* ---- enlaces recibidos desde «Compartir» de Android ---- */
+function takeShared(){const p=new URLSearchParams(location.search);const txt=[p.get('url'),p.get('text'),p.get('title')].filter(Boolean).join(' ');if(!txt)return;
+ history.replaceState(null,'',location.pathname);S.tab='base';renderTabs();
+ if(!(txt.match(/\S+/g)||[]).some(ytId)){$('mlog').textContent='Lo que has compartido no contiene ningún enlace de YouTube.';return}
+ $('vurl').value=txt;$('vcan').value='';addFromBox();$('mlog').textContent='📥 '+$('mlog').textContent+(syOn()?' Se enviará al PC para procesarlo.':'');window.scrollTo(0,0)}
+
+/* ---- comparar ---- */
+function bestIdx(vals,dir){const v=vals.map(x=>x==null?null:x);const f=v.filter(x=>x!=null);if(f.length<2||!dir)return -1;const b=dir==='high'?Math.max(...f):Math.min(...f);if(f.every(x=>x===b))return -1;return v.indexOf(b)}
+function renderPick(){const L=filt(),by={},cmp=(a,b)=>a.localeCompare(b,'es',{sensitivity:'base'});
+ L.forEach(c=>{const m=(c.marca||'').trim()||'(Sin marca)';(by[m]=by[m]||[]).push(c)});
+ const marcas=Object.keys(by).sort(cmp);
+ $('picksum').textContent=`Elige coches para comparar (${S.sel.filter(byId).length} de 5)`;
+ $('pick').innerHTML=marcas.length?marcas.map(m=>`<h3>${esc(m)}</h3><div class="eqg">${by[m].sort((a,b)=>cmp((a.modelo||'')+' '+(a.version||''),(b.modelo||'')+' '+(b.version||''))).map(c=>`<label class="row"><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"><span>${esc(c.modelo||'(sin modelo)')}${c.version?' <span class="mu">'+esc(c.version)+'</span>':''}</span></label>`).join('')}</div>`).join(''):'<p class="mu">No hay coches (o ninguno pasa los filtros).</p>'}
+function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean);
+ if(cars.length<2){$('cmp').innerHTML='<tr><td>Selecciona al menos 2 coches.</td></tr>';return}
+ let h='<tr><th></th>'+cars.map(c=>`<th>${esc(nm(c))}</th>`).join('')+'</tr>',g='';
+ const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
+ h+=`<tr><td>Tipo</td>${cars.map(c=>`<td>${esc(c.t||'–')}</td>`).join('')}</tr>`;
+ ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
+ h+=`<tr><th colspan="${cars.length+1}">Coste por viaje tipo</th></tr>`+S.trips.map(t=>row(`${esc(t.n)} (${t.km} km) €`,cars.map(c=>tripCost(c,t)),'low')).join('');
+ g='';EQ.forEach(e=>{const vals=cars.map(c=>c.eq&&typeof c.eq[e[0]]==='boolean'?c.eq[e[0]]:null);if(vals.every(v=>v==null))return;if(e[2]!==g){g=e[2];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=`<tr><td>${esc(e[1])}</td>`+vals.map(v=>`<td class="${v===true?'best':''}">${v==null?'?':v?'✓':'✗'}</td>`).join('')+'</tr>'});
+ $('cmp').innerHTML=h}
+
+/* ---- ranking ---- */
+function scoreList(L){const rng={};ALLN.forEach(n=>{const v=L.map(c=>val(c,n[0])).filter(x=>x!=null);rng[n[0]]=v.length?[Math.min(...v),Math.max(...v)]:null});
+ const eqW=EQ.filter(e=>(S.wE[e[0]]||0)>0);
+ return L.map(c=>{let s=0,w=0;
+  ALLN.forEach(n=>{const wt=S.wN[n[0]]||0,v=val(c,n[0]),r=rng[n[0]];if(!n[4]||!wt||v==null||!r)return;const x=r[1]===r[0]?1:(v-r[0])/(r[1]-r[0]);s+=wt*(n[4]==='high'?x:1-x);w+=wt});
+  eqW.forEach(e=>{const wt=S.wE[e[0]];w+=wt;if(c.eq&&c.eq[e[0]]===true)s+=wt});
+  return{c,s:w?100*s/w:null}}).sort((a,b)=>(b.s??-1)-(a.s??-1))}
+function renderRank(){const L=filt();
+ $('rank').innerHTML=L.length?'<tr><th>#</th><th>Coche</th><th>Puntuación</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L).map((r,i)=>`<tr><td><b>${i+1}</b></td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join(''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
+function renderWeights(){
+ $('wn').innerHTML=ALLN.filter(n=>n[4]).map(n=>`<label>${n[1]}<input type="number" min="0" max="10" value="${S.wN[n[0]]||0}" onchange="S.wN['${n[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('');
+ $('we').innerHTML=EQ.map(e=>`<label>${esc(e[1])}<input type="number" min="0" max="10" value="${S.wE[e[0]]||0}" onchange="S.wE['${e[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('')}
+
+/* ---- gráficos ---- */
+function renderChartSel(){const s=$('cparam'),cur=s.value;s.innerHTML='<option value="_score">Puntuación del ranking</option>'+ALLN.map(n=>`<option value="${n[0]}">${n[1]}${n[2]?' ('+n[2]+')':''}</option>`).join('')+S.trips.map((t,i)=>`<option value="_t${i}">Coste: ${esc(t.n)}</option>`).join('');if(cur)s.value=cur;if(!s.value)s.selectedIndex=0}
+function renderChart(){const k=$('cparam').value,L=filt();let rows;
+ if(k==='_score')rows=scoreList(L).map(r=>({n:nm(r.c),v:r.s}));
+ else if(/^_t\d+$/.test(k)){const t=S.trips[+k.slice(2)];rows=L.map(c=>({n:nm(c),v:t?tripCost(c,t):null}))}
+ else rows=L.map(c=>({n:nm(c),v:val(c,k)}));
+ rows=rows.filter(r=>r.v!=null);const asc=!(k==='_score'||(ALLN.find(n=>n[0]===k)||[])[4]==='high');rows.sort((a,b)=>asc?a.v-b.v:b.v-a.v);
+ const m=Math.max(...rows.map(r=>r.v),0)||1;
+ $('chart').innerHTML=rows.length?rows.map(r=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v">${fmt(r.v)}</span></div>`).join(''):'<p class="mu">Sin datos para este parámetro.</p>'}
+
+/* ---- ajustes ---- */
+function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();renderLims();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
+ $('prices').innerHTML=Object.keys(Lb).map(k=>`<label>${Lb[k]}<input type="number" step="0.01" value="${S.pr[k]}" onchange="S.pr.${k}=+this.value;save();refresh()"></label>`).join('');
+ $('trips').innerHTML='<tr><th>Viaje</th><th>km</th><th>% carretera</th></tr>'+S.trips.map((t,i)=>`<tr><td><input type="text" value="${esc(t.n)}" onchange="S.trips[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${t.km}" onchange="S.trips[${i}].km=+this.value;save();refresh()"></td><td><input type="number" value="${t.road}" onchange="S.trips[${i}].road=+this.value;save();refresh()"></td></tr>`).join('')}
+function exp(){$('io').value=JSON.stringify(S)}
+function imp(){try{const d=JSON.parse($('io').value);if(!d.cars)throw 0;S=d;S.f=S.f||{t:[],eq:[]};S.sel=S.sel||[];save();renderAll()}catch(e){alert('JSON no válido')}}
+
+/* ---- render ---- */
+function refresh(){renderTable();renderCompare();renderRank();renderChart();$('fsum').textContent=`Filtros (${nActive()} activos)`}
+function renderAll(){renderQ();renderFilters();renderTabs();renderSettings();renderWeights();renderChartSel();renderEdit();refresh()}
+S.cars.forEach(c=>{if(!c.u)c.u=1});Q.items.forEach(x=>{if(!x.u)x.u=1});
+snapAll();
+Q.items.forEach(x=>{if(x.st==='proc'&&(!x.by||x.by===DEV)){x.st='pend';x.msg='Interrumpido al cerrar la página; se reintenta'}});
+save();renderAll();schedule(1500);takeShared();syncNow();
+if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)))navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
