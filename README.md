@@ -19,6 +19,15 @@ mediante Gemini. Los datos se sincronizan entre dispositivos a través de un scr
 - **Control de tokens** (Ajustes → Límites de uso): tokens al día, tokens por vídeo, vídeos al día,
   pausa entre vídeos. Se consulta el tamaño antes (gratis) y el vídeo se analiza a baja resolución
   (≈4 k tokens por minuto de vídeo). Errores 429/503 de Google: espera y reintenta sola.
+- **Modelos de respaldo:** si el modelo principal de Gemini está saturado (503) o sin cuota (429),
+  se prueba al momento con otro modelo Flash (automático o configurable en Ajustes).
+- **Completar ficha** (botón en cada coche o «Completar todas las fichas»): Gemini con búsqueda de
+  Google rellena solo los datos que faltan, priorizando fabricante, km77, ev-database, Spritmonitor
+  y Euro NCAP, y guarda la URL de cada dato (🌐 en la ficha). Va a la cola y lo hace el PC.
+- **Imágenes:** miniatura del vídeo de origen o un enlace a una foto propia.
+- **Rutas largas** (Comparar; parámetros en Ajustes → Rutas largas): Getafe → Pontevedra y
+  Getafe → Albacete por defecto, en condiciones favorables y desfavorables (frío y viento):
+  paradas, tiempo cargando, tiempo total y coste. ≈ indica valores estimados por falta de datos reales.
 - **Sincronización** (Ajustes → Sincronización con Google): coches, precios, viajes, pesos y cola se
   comparten; en cada coche o vídeo gana el cambio más reciente. Filtros, selección y clave de Gemini
   son de cada dispositivo. La URL y la clave del script nunca están en el código.

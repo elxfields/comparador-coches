@@ -70,7 +70,7 @@ a{color:var(--ac)}
 </details>
 <p class="mu" id="cnt"></p>
 <div class="sc"><table id="tbl"></table></div>
-<p><button onclick="addCar()">+ Añadir coche a mano</button></p>
+<p><button onclick="addCar()">+ Añadir coche a mano</button> <button onclick="queueAllFichas()">🌐 Completar todas las fichas</button></p>
 <div id="edit"></div>
 </div>
 
@@ -110,6 +110,11 @@ a{color:var(--ac)}
 <h2 style="margin-top:14px">Viajes tipo</h2>
 <div class="sc"><table id="trips"></table></div>
 <p class="mu">% carretera: parte de la energía eléctrica cargada en público (el resto, en casa). El viaje «mixto» (el segundo) define el coste por 100 km. En híbridos enchufables, primero se usa la autonomía eléctrica y el resto es combustible.</p>
+<h2 style="margin-top:14px">Rutas largas (al estilo ABRP)</h2>
+<div class="sc"><table id="routes"></table></div>
+<p><button onclick="S.routes.push({n:'Nueva ruta',km:300,h:3});save();renderAll()">+ Añadir ruta</button></p>
+<div class="g" id="rparams"></div>
+<p class="mu">Los km y las horas de conducción son aproximados: ajústalos con Google Maps a tu ruta habitual. En los eléctricos se sale con la carga indicada, se para cuando la batería baja al mínimo y se carga hasta el máximo (en la última parada, solo lo necesario para llegar con el mínimo). «Favorable» usa el consumo real en autopista con clima templado; «desfavorable», el consumo con frío multiplicado por el viento en contra, y la carga es más lenta. El coste supone que sales cargado en casa y el resto lo cargas en la carretera.</p>
 <h2 style="margin-top:14px">Datos</h2>
 <p class="mu">Se guardan en este navegador. Exporta el JSON como copia de seguridad o para llevarlo a otro dispositivo.</p>
 <textarea id="io"></textarea>
@@ -124,7 +129,8 @@ const NUM=[
 ['precio','Precio','€','General','low'],['anio','Año','','General',null],['plazas','Plazas','','General','high'],
 ['largo','Largo','mm','Dimensiones','low'],['ancho','Ancho','mm','Dimensiones','low'],['alto','Alto','mm','Dimensiones','low'],['batalla','Batalla','mm','Dimensiones','high'],['altSuelo','Altura libre al suelo','mm','Dimensiones','high'],['peso','Peso','kg','Dimensiones','low'],['mal','Maletero','L','Dimensiones','high'],['malMax','Maletero máx. (asientos abatidos)','L','Dimensiones','high'],['piernasTras','Espacio piernas plazas traseras','mm','Dimensiones','high'],
 ['cv','Potencia','CV','Prestaciones','high'],['par','Par motor','Nm','Prestaciones','high'],['acel','0-100 km/h','s','Prestaciones','low'],['vmax','Velocidad máx.','km/h','Prestaciones','high'],
-['kwh100','Consumo eléctrico','kWh/100km','Energía','low'],['l100','Consumo combustible','L/100km','Energía','low'],['bat','Batería útil','kWh','Energía','high'],['rango','Autonomía total WLTP','km','Energía','high'],['rangoE','Autonomía eléctrica (PHEV)','km','Energía','high'],['dc','Potencia carga DC','kW','Energía','high'],['ac','Potencia carga AC','kW','Energía','high'],['c1080','Carga 10-80%','min','Energía','low'],
+['kwh100','Consumo eléctrico','kWh/100km','Energía','low'],['l100','Consumo combustible','L/100km','Energía','low'],['bat','Batería útil','kWh','Energía','high'],['rango','Autonomía total WLTP','km','Energía','high'],['rangoE','Autonomía eléctrica (PHEV)','km','Energía','high'],['dc','Potencia carga DC','kW','Energía','high'],['ac','Potencia carga AC','kW','Energía','high'],['c1080','Carga 10-80%','min','Energía','low'],['dcMedia','Potencia media carga 10-80%','kW','Energía','high'],
+['kwh100Real','Consumo real mixto','kWh/100km','Consumo real','low'],['kwh100AutT','Consumo real autopista (templado)','kWh/100km','Consumo real','low'],['kwh100AutF','Consumo real autopista (frío)','kWh/100km','Consumo real','low'],['rangoReal','Autonomía real mixta','km','Consumo real','high'],['l100Real','Consumo real combustible','L/100km','Consumo real','low'],
 ['gar','Garantía','años','Garantía y seguridad','high'],['garBat','Garantía batería','años','Garantía y seguridad','high'],['ncap','Euro NCAP','estrellas','Garantía y seguridad','high'],
 ['qInt','Calidad interior (obs. probadores)','0-10','Opinión probadores','high'],['confort','Confort de marcha (obs.)','0-10','Opinión probadores','high'],['insonor','Insonorización (obs.)','0-10','Opinión probadores','high'],['dinam','Dinámica de conducción (obs.)','0-10','Opinión probadores','high'],['infotain','Infoentretenimiento (obs.)','0-10','Opinión probadores','high']
 ];
@@ -141,9 +147,12 @@ const EQ=[
 const FL=[['pMin','Precio mín (€)','precio','min'],['pMax','Precio máx (€)','precio','max'],['cvMin','Potencia mín (CV)','cv','min'],['cvMax','Potencia máx (CV)','cv','max'],['largoMax','Largo máx (mm)','largo','max'],['anchoMax','Ancho máx (mm)','ancho','max'],['altoMax','Alto máx (mm)','alto','max'],['malMin','Maletero mín (L)','mal','min'],['rangoMin','Autonomía mín (km)','rango','min'],['plazasMin','Plazas mín','plazas','min'],['acelMax','0-100 máx (s)','acel','max'],['dcMin','Carga DC mín (kW)','dc','min']];
 const TABS=[['base','Base de datos'],['comp','Comparar'],['rank','Ranking'],['chart','Gráficos'],['set','Ajustes']];
 
-function def(){return{pr:{gas:1.55,die:1.45,casa:0.15,pub:0.55},trips:[{n:'Ciudad diaria',km:30,road:0},{n:'Mixto semanal',km:150,road:30},{n:'Viaje largo',km:600,road:90}],wN:{precio:5,coste100:5,mal:3,rango:3,cv:2,qInt:3,confort:3},wE:{acc:3,aeb:5},cars:[],del:{},cfgT:0,nid:1,f:{t:[],eq:[]},sel:[],edit:null,tab:'base'}}
+// Rutas largas y parámetros del simulador (al estilo ABRP)
+const DEF_RP={soc0:90,socMin:10,socMax:80,over:5,fReal:1.15,fWltp:1.3,fFrio:1.3,viento:1.1,cargaFrio:1.3,combAut:1.15,combF:1.08};
+const DEF_ROUTES=()=>[{n:'Getafe → Pontevedra',km:610,h:5.9},{n:'Getafe → Albacete',km:255,h:2.5}];
+function def(){return{pr:{gas:1.55,die:1.45,casa:0.15,pub:0.55},trips:[{n:'Ciudad diaria',km:30,road:0},{n:'Mixto semanal',km:150,road:30},{n:'Viaje largo',km:600,road:90}],wN:{precio:5,coste100:5,mal:3,rango:3,cv:2,qInt:3,confort:3},wE:{acc:3,aeb:5},routes:DEF_ROUTES(),rp:Object.assign({},DEF_RP),cars:[],del:{},cfgT:0,nid:1,f:{t:[],eq:[]},sel:[],edit:null,tab:'base'}}
 let S;try{S=JSON.parse(localStorage.getItem('cmp2')||'null')}catch(e){}
-if(!S||!S.cars)S=def();S.f=S.f||{t:[],eq:[]};S.f.t=S.f.t||[];S.f.eq=S.f.eq||[];S.sel=S.sel||[];S.del=S.del||{};if(!S.cfgT&&S.cars.length)S.cfgT=1;
+if(!S||!S.cars)S=def();S.f=S.f||{t:[],eq:[]};S.f.t=S.f.t||[];S.f.eq=S.f.eq||[];S.sel=S.sel||[];S.del=S.del||{};if(!S.cfgT&&S.cars.length)S.cfgT=1;S.routes=S.routes||DEF_ROUTES();S.rp=Object.assign({},DEF_RP,S.rp||{});
 // Abierta desde el servidor local (127.0.0.1/localhost:8765), además guarda la base en datos.json de la carpeta.
 const FSYNC=/^(127\.0\.0\.1|localhost)$/.test(location.hostname)&&location.port==='8765';let fsT=null;
 function fileSync(){if(!FSYNC||!S.cars.length)return;/* una base vacía nunca pisa el archivo */clearTimeout(fsT);fsT=setTimeout(()=>{fetch('/save',{method:'POST',body:JSON.stringify(S)}).catch(()=>{})},1500)}
@@ -155,16 +164,47 @@ const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
 const fmt=v=>v==null?'–':(+(+v).toFixed(2)).toLocaleString('es-ES');
 const nm=c=>[c.marca,c.modelo,c.version].filter(Boolean).join(' ')||'(sin nombre)';
 const byId=id=>S.cars.find(c=>c.id===id);
+// Imagen del coche: la que pongas a mano o la miniatura del primer vídeo de YouTube del que salió.
+function carImg(c){if(c.img)return c.img;const s=(c.src||[]).find(s=>ytId(s.url));return s?`https://i.ytimg.com/vi/${ytId(s.url)}/mqdefault.jpg`:null}
+const imgTag=(c,w,h)=>{const u=carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:6px;display:block" onerror="this.style.display='none'">`:''};
 
 /* ---- costes ---- */
 function tripCost(c,tr){const r=tr.road/100,km=tr.km,fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
- const el=k=>c.kwh100!=null?k*c.kwh100/100*((1-r)*S.pr.casa+r*S.pr.pub):null;
- const fu=k=>c.l100!=null?k*c.l100/100*fp:null;
+ const kw=c.kwh100Real??c.kwh100,lc=c.l100Real??c.l100;
+ const el=k=>kw!=null?k*kw/100*((1-r)*S.pr.casa+r*S.pr.pub):null;
+ const fu=k=>lc!=null?k*lc/100*fp:null;
  if(c.t==='BEV')return el(km);
  if(c.t==='PHEV'){const ek=Math.min(km,c.rangoE||0),e=el(ek),f=fu(km-ek);return(e==null||f==null)?null:e+f}
  if(c.t==='HEV'||c.t==='Gasolina'||c.t==='Diésel')return fu(km);
  return null}
 function val(c,k){if(k==='coste100'){const tr=S.trips[1]||S.trips[0];if(!tr)return null;const v=tripCost(c,tr);return v==null?null:v/tr.km*100}return num(c[k])}
+
+/* ---- rutas largas (al estilo ABRP) ----
+ Eléctricos: sale con soc0 %, llega a cada parada con socMin %, carga hasta socMax % (en la última, solo lo necesario).
+ Consumo favorable = autopista con clima templado; desfavorable = autopista con frío × viento en contra.
+ Si falta el dato real se estima (≈) a partir del consumo real mixto o del WLTP. */
+function routeSim(c,r,cond){const P=S.rp,km=+r.km,driveMin=(+r.h||0)*60,desf=cond==='desf';if(!km)return null;
+ if(c.t==='BEV'){
+  let est=false,base=num(c.kwh100AutT);
+  if(base==null){est=true;base=num(c.kwh100Real)!=null?c.kwh100Real*P.fReal:num(c.kwh100)!=null?c.kwh100*P.fWltp:null}
+  if(base==null||!num(c.bat))return null;
+  let cons=base;if(desf){if(num(c.kwh100AutF)!=null)cons=c.kwh100AutF;else{cons=base*P.fFrio;est=true}cons*=P.viento}
+  const E=+c.bat,C=cons/100,s0=P.soc0,sMin=P.socMin,sMax=Math.max(P.socMax,sMin+5),win=sMax-sMin;
+  const r0=Math.max(0,s0-sMin)/100*E/C;let stops=0,chSoc=0;
+  if(km>r0){const leg=win/100*E/C,rem=km-r0;stops=Math.ceil(rem/leg);chSoc=(stops-1)*win+Math.min(win,(rem-(stops-1)*leg)*C/E*100)}
+  let t70=num(c.c1080),estC=false;
+  if(t70==null){estC=true;const p=num(c.dcMedia)??(num(c.dc)?c.dc*0.55:null);t70=p?0.7*E/p*60:null}
+  if(stops&&t70==null)return null;
+  const chargeMin=stops?chSoc/70*t70*(desf?P.cargaFrio:1)+stops*P.over:0;
+  const kWhPub=chSoc/100*E*1.08,kWhHome=(stops?Math.max(0,s0-sMin)/100*E:km*C)*1.1;
+  return{stops,chargeMin,driveMin,totalMin:driveMin+chargeMin,cost:kWhPub*S.pr.pub+kWhHome*S.pr.casa,cons,est:est||(stops>0&&estC)}}
+ const fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
+ let l=num(c.l100Real)!=null?c.l100Real:num(c.l100)!=null?c.l100*P.combAut:null;const est=num(c.l100Real)==null;if(l==null)return null;if(desf)l*=P.combF;
+ let kmE=0,eCost=0;if(c.t==='PHEV'&&num(c.rangoE)&&num(c.kwh100)){kmE=Math.min(km,c.rangoE*(desf?0.7:0.9));eCost=kmE*c.kwh100/100*1.1*S.pr.casa}
+ return{stops:0,chargeMin:0,driveMin,totalMin:driveMin,cost:(km-kmE)*l/100*fp+eCost,cons:l,est}}
+const fmtMin=m=>{if(m==null)return'–';const t=Math.round(m),h=Math.floor(t/60),mm=t%60;return h?`${h} h ${String(mm).padStart(2,'0')} min`:`${mm} min`};
+const CONDS=[['fav','favorable'],['desf','desfavorable (frío y viento)']];
+const RMET=[['stops','paradas a cargar',v=>v],['chargeMin','tiempo cargando',fmtMin],['totalMin','tiempo total',fmtMin],['cost','coste €',v=>fmt(Math.round(v*100)/100)]];
 
 /* ---- filtros ---- */
 function filt(){const f=S.f;return S.cars.filter(c=>{
@@ -188,20 +228,26 @@ function showTab(){TABS.forEach(([k])=>$('pg-'+k).classList.toggle('on',S.tab===
 function completeness(c){const n=NUM.length+EQ.length;let h=0;NUM.forEach(x=>{if(num(c[x[0]])!=null)h++});EQ.forEach(e=>{if(c.eq&&typeof c.eq[e[0]]==='boolean')h++});return Math.round(100*h/n)}
 function renderTable(){const L=filt();$('cnt').textContent=`${L.length} de ${S.cars.length} coches (filtros activos: ${nActive()})`;$('fsum').textContent=`Filtros (${nActive()} activos)`;
  if(!S.cars.length){$('tbl').innerHTML='<tr><td>Base vacía. Añade tu primer coche desde un vídeo o a mano.</td></tr>';return}
- $('tbl').innerHTML='<tr><th>Comparar</th><th>Coche</th><th>Tipo</th><th>Precio €</th><th>CV</th><th>Largo mm</th><th>Maletero L</th><th>Autonomía km</th><th>€/100 km</th><th>Datos</th><th>Fuentes</th><th></th></tr>'+
- L.map(c=>`<tr><td><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"></td><td><a href="#" onclick="openEdit(${c.id});return false">${esc(nm(c))}</a></td><td>${esc(c.t||'–')}</td><td>${fmt(c.precio)}</td><td>${fmt(c.cv)}</td><td>${fmt(c.largo)}</td><td>${fmt(c.mal)}</td><td>${fmt(c.rango)}</td><td>${fmt(val(c,'coste100'))}</td><td>${completeness(c)}%</td><td>${(c.src||[]).length}</td><td><button onclick="delCar(${c.id})">✕</button></td></tr>`).join('')}
+ $('tbl').innerHTML='<tr><th>Comparar</th><th></th><th>Coche</th><th>Tipo</th><th>Precio €</th><th>CV</th><th>Largo mm</th><th>Maletero L</th><th>Autonomía km</th><th>€/100 km</th><th>Datos</th><th>Fuentes</th><th></th></tr>'+
+ L.map(c=>`<tr><td><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"></td><td>${imgTag(c,64,36)}</td><td><a href="#" onclick="openEdit(${c.id});return false">${esc(nm(c))}</a></td><td>${esc(c.t||'–')}</td><td>${fmt(c.precio)}</td><td>${fmt(c.cv)}</td><td>${fmt(c.largo)}</td><td>${fmt(c.mal)}</td><td>${fmt(c.rango)}</td><td>${fmt(val(c,'coste100'))}</td><td>${completeness(c)}%</td><td>${(c.src||[]).length}</td><td><button onclick="delCar(${c.id})">✕</button></td></tr>`).join('')}
 function selCar(id,on){tog(S.sel,id,on);if(S.sel.length>5)S.sel.shift();renderTable();save();renderCompare()}
 function delCar(id){if(!confirm('¿Borrar este coche?'))return;S.cars=S.cars.filter(c=>c.id!==id);S.sel=S.sel.filter(x=>x!==id);if(S.edit===id)S.edit=null;save();renderAll()}
 function addCar(){const c={id:newId(),eq:{},src:[],notas:[],t:'BEV',modelo:'Nuevo coche'};S.cars.push(c);S.edit=c.id;save();renderAll();$('edit').scrollIntoView()}
 function openEdit(id){S.edit=id;renderEdit();$('edit').scrollIntoView()}
 function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  const grp=[...new Set(NUM.map(n=>n[3]))];
+ const q=encodeURIComponent([c.marca,c.modelo,c.version].filter(Boolean).join(' ')),gs=site=>`https://www.google.com/search?q=site%3A${site}+${q}`;
+ const webMark=k=>c.fsrc&&c.fsrc[k]?(/^https?:/.test(c.fsrc[k])?` <a href="${esc(c.fsrc[k])}" target="_blank" rel="noopener" title="Dato sacado de internet: ${esc(c.fsrc[k])}">🌐</a>`:' <span title="Dato sacado de internet">🌐</span>'):'';
+ const webSrc=[...new Set(Object.values(c.fsrc||{}).filter(u=>/^https?:/.test(u)))];
  $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
- <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
- grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label>${n[1]}${n[2]?' ('+n[2]+')':''}<input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
+ <div style="margin-top:8px">${imgTag(c,240,135)}</div>
+ <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha con internet</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
+ <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
+ grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
  [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
  `<h3>Fuentes</h3>${(c.src||[]).map(s=>`<div class="mu"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.canal||s.url)}</a> ${esc(s.fecha||'')}</div>`).join('')||'<div class="mu">Sin fuentes</div>'}
- ${(c.notas||[]).length?`<h3>Notas de los vídeos</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}
+ ${webSrc.length||(c.web||[]).length?`<h3>Fuentes web (🌐)</h3>${webSrc.map(u=>`<div class="mu"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,'').slice(0,80))}</a></div>`).join('')}${(c.web||[]).length?`<div class="mu">Consultadas: ${c.web.map(w=>`<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.title||'web')}</a>`).join(' · ')}</div>`:''}`:''}
+ ${(c.notas||[]).length?`<h3>Notas</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}
  <p><button onclick="S.edit=null;renderEdit()">Cerrar</button></p></details>`}
 function setF(id,k,v){const c=byId(id);if(!c)return;c[k]=v;save();refresh()}
 function setE(id,k,v){const c=byId(id);c.eq=c.eq||{};if(v==='')delete c.eq[k];else c.eq[k]=v==='s';save();refresh()}
@@ -342,8 +388,9 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
  if(wait>0){qMsg='Siguiente vídeo en '+fmtT(wait)+' (pausa entre vídeos).';renderQ();return schedule(Math.min(wait,1000)+50)}
  const u=usage();
  if(u.req>=LIM.dayReq||u.tok>=LIM.dayTok){qMsg='Límite diario alcanzado ('+(u.req>=LIM.dayReq?'vídeos':'tokens')+'). Se reanuda a medianoche.';renderQ();return schedule(Math.min(msToMidnight(),3600000))}
- qBusy=true;it.st='proc';it.by=DEV;it.msg='Consultando tamaño del vídeo…';qMsg='Procesando…';saveQ();renderQ();
+ qBusy=true;it.st='proc';it.by=DEV;it.msg=it.kind==='ficha'?'Preparando la búsqueda…':'Consultando tamaño del vídeo…';qMsg='Procesando…';saveQ();renderQ();
  try{
+  if(it.kind==='ficha'){await doFicha(it,u);return}
   const c=await countTok(it.url);it.est=c.tok;
   if(c.tok!=null&&!it.force){
    if(c.tok>LIM.vidTok){it.st='skip';it.msg=`Saltado: ~${fmtK(c.tok)} tokens, más que el máximo por vídeo (${fmtK(LIM.vidTok)}). «Reintentar» lo procesa igualmente.`;return}
@@ -373,12 +420,70 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
   else{it.st='err';it.msg='Error: '+((e&&e.msg)||(e&&e.message)||String(e))}
  }finally{clearInterval(qTick);delete it.force;qBusy=false;saveQ();renderQ();schedule(500)}}
 
+/* ---- completar ficha con internet (Gemini + búsqueda de Google) ---- */
+function queueFicha(id,quiet){const c=byId(id);if(!c)return false;const key='ficha-'+id;
+ const q=Q.items.find(x=>x.yt===key);if(q&&(q.st==='pend'||q.st==='proc')){if(!quiet)$('mlog').textContent='Esa ficha ya está en la cola.';return false}
+ Q.items=Q.items.filter(x=>x.yt!==key);Q.items.push({yt:key,kind:'ficha',car:id,url:'',canal:'',st:'pend',msg:'',added:Date.now()});
+ if(!quiet){saveQ();renderQ();schedule(300);$('mlog').textContent=`Ficha de ${nm(c)} añadida a la cola`+(syOn()&&!SY.proc?'; la completará el PC.':'.');S.tab='base';renderTabs()}
+ return true}
+function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100);if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
+ if(!confirm(`Se buscarán en internet los datos que faltan de ${L.length} coche${L.length>1?'s':''} (unos 5-20 k tokens cada uno). ¿Seguir?`))return;
+ const n=L.filter(c=>queueFicha(c.id,true)).length;saveQ();renderQ();schedule(300);$('mlog').textContent=`${n} ficha${n>1?'s':''} añadida${n>1?'s':''} a la cola.`;window.scrollTo(0,0)}
+function fichaPrompt(c,miss,missEq){const lab=k=>{const n=NUM.find(x=>x[0]===k);return n?`${n[1]}${n[2]?' ('+n[2]+')':''}`:k};
+ const ev=c.t==='BEV'||c.t==='PHEV';
+ return `Busca en internet los datos técnicos y de consumo real de este coche y devuelve SOLO un objeto JSON dentro de un bloque \`\`\`json.
+
+Coche: ${[c.marca,c.modelo,c.version].filter(Boolean).join(' ')}${c.t?' · '+c.t:''}${c.anio?' · '+c.anio:''}${c.carroc?' · '+c.carroc:''}. Mercado: España.
+
+Fuentes preferidas, en este orden según el dato:
+- Web oficial del fabricante en España y km77.com: ficha técnica, dimensiones, maletero, potencia, garantía y precio de tarifa en España.
+${ev?'- ev-database.org: consumos y autonomías reales (combinado, autopista con clima templado y con frío), batería útil, carga 10-80 % y potencia media de carga.\n':''}- spritmonitor.de: consumo real medio de usuarios.
+- euroncap.com: estrellas Euro NCAP.
+
+Rellena SOLO estos campos (los demás ya los tengo):
+${miss.map(k=>`"${k}": ${lab(k)}`).join('\n')}
+${missEq.length?`Equipamiento ("eq"), true o false solo si la fuente lo indica para esta versión en España: ${missEq.map(k=>`"${k}" (${(EQ.find(e=>e[0]===k)||[])[1]})`).join(', ')}`:''}
+
+Reglas:
+- Números sin unidades, con punto decimal. null si no lo encuentras con seguridad. No inventes ni estimes.
+- kwh100AutT = consumo real en autopista (~110-120 km/h) con clima templado; kwh100AutF = lo mismo con frío; kwh100Real = consumo real combinado; rangoReal = autonomía real combinada (en ev-database: "Highway - Mild Weather", "Highway - Cold Weather", "Combined").
+- dcMedia = potencia media de carga del 10 al 80 %. bat = capacidad útil de la batería.
+- Si la versión exacta no aparece, usa la más parecida y dilo en "notas".
+- "fuentes": para cada campo rellenado, la URL de la página de donde sale.
+
+Formato:
+{"campos": {"campo": valor}, "eq": {"clave": true}, "fuentes": {"campo": "https://..."}, "notas": ["máx. 5 notas breves"]}`}
+async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese coche ya no existe';return}
+ if(u.tok+20000>LIM.dayTok&&!it.force){it.st='pend';it.next=Date.now()+msToMidnight();it.msg='Esperando a mañana: no cabe en el presupuesto de hoy.';return}
+ const miss=NUM.filter(n=>num(c[n[0]])==null).map(n=>n[0]),missEq=EQ.filter(e=>!c.eq||typeof c.eq[e[0]]!=='boolean').map(e=>e[0]);
+ if(!miss.length&&!missEq.length){it.st='ok';it.msg='La ficha ya estaba completa';return}
+ it.msg='Gemini está buscando en internet…';it.t0=Date.now();renderQ();Q.last=Date.now();saveQ();
+ qTick=setInterval(()=>{const el=document.getElementById('qrun');if(el)el.textContent=fmtT(Date.now()-it.t0)},1000);
+ const body={contents:[{role:'user',parts:[{text:fichaPrompt(c,miss,missEq)}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.1}};
+ const chain=[model(),...await fallbacks()];let j=null;it.model=null;
+ for(let k=0;k<chain.length&&!j;k++){const m=chain[k];
+  try{j=await gapi('generateContent',body,m);it.model=m}
+  catch(e){const pasa=e&&([404,429,500,502,503,504].includes(e.status)||e instanceof TypeError);if(!pasa||k===chain.length-1)throw e;
+   it.msg=`${m}: ${e.status===503?'saturado':e.status===429?'sin cuota':e.status===404?'no disponible':'fallo temporal'}. Probando con ${chain[k+1]}…`;renderQ()}}
+ const tok=(j.usageMetadata||{}).totalTokenCount||0;addUse(tok,1);it.tok=tok;
+ const cand=j.candidates&&j.candidates[0],txt=((cand&&cand.content&&cand.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
+ const mt=txt.match(/```(?:json)?\s*([\s\S]*?)```/);let o;
+ try{o=JSON.parse(mt?mt[1]:txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1))}catch(e){it.st='err';it.msg='Gemini no devolvió un JSON válido'+(cand&&cand.finishReason&&cand.finishReason!=='STOP'?' ('+cand.finishReason+')':'');return}
+ const f=o.campos||{},fu=o.fuentes||{},got=[];c.fsrc=c.fsrc||{};
+ miss.forEach(k=>{const v=num(f[k]);if(v!=null){c[k]=v;got.push(k);c.fsrc[k]=typeof fu[k]==='string'&&/^https?:\/\//.test(fu[k])?fu[k]:'web'}});
+ let eqn=0;c.eq=c.eq||{};Object.entries(o.eq||{}).forEach(([k,v])=>{if(missEq.includes(k)&&typeof v==='boolean'){c.eq[k]=v;eqn++}});
+ const gm=(cand&&cand.groundingMetadata)||{},web=(gm.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({url:w.uri,title:w.title||''}));
+ c.web=[...(c.web||[]),...web].filter((w,i,a)=>a.findIndex(x=>x.title===w.title)===i).slice(0,15);
+ c.notas=c.notas||[];(Array.isArray(o.notas)?o.notas:[]).slice(0,5).forEach(n=>{if(typeof n==='string'&&n){const t='[web] '+n;if(!c.notas.includes(t))c.notas.push(t)}});
+ it.st='ok';it.msg=`${nm(c)}: ${got.length} dato${got.length===1?'':'s'} y ${eqn} equipamiento${eqn===1?'':'s'} nuevos`+(it.model&&it.model!==model()?` (con ${it.model})`:'');
+ save();renderAll()}
+
 const QST={pend:['⏳','Pendiente'],proc:['⚙️','Procesando'],ok:['✅','Hecho'],err:['❌','Error'],skip:['⏭️','Saltado']};
 function renderQ(){if(!$('qtbl'))return;const u=usage();
  const n=k=>Q.items.filter(x=>x.st===k).length;
  $('qtog').textContent=Q.paused?'Reanudar cola':'Pausar cola';
  $('qstat').innerHTML=`Hoy: <b>${fmtK(u.tok)}</b> de ${fmtK(LIM.dayTok)} tokens · <b>${u.req}</b> de ${LIM.dayReq} vídeos`+(Q.items.length?` · Cola: ${n('pend')+n('proc')} pendientes, ${n('ok')} hechos${n('err')?', '+n('err')+' con error':''}${n('skip')?', '+n('skip')+' saltados':''}`:'')+(qMsg?`<br>${esc(qMsg)}`:'');
- $('qtbl').innerHTML=Q.items.length?'<tr><th></th><th>Vídeo</th><th>Estado</th><th>Tokens</th><th></th></tr>'+Q.items.map(x=>`<tr><td>${QST[x.st][0]}</td><td><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.yt)}</a>${x.canal?' <span class="mu">'+esc(x.canal)+'</span>':''}</td><td style="white-space:normal;min-width:220px">${QST[x.st][1]}${x.st==='proc'?' <span class="mu" id="qrun"></span>':''}${x.msg?'<div class="mu">'+esc(x.msg)+'</div>':''}</td><td>${x.tok?fmtK(x.tok):x.est?'~'+fmtK(x.est):'–'}</td><td>${x.st==='err'||x.st==='skip'||(x.st==='pend'&&x.next>Date.now())?`<button onclick="qRetry('${x.yt}')">${x.st==='pend'?'Ya':'Reintentar'}</button> `:''}${x.st!=='proc'?`<button onclick="qDel('${x.yt}')">✕</button>`:''}</td></tr>`).join(''):''}
+ $('qtbl').innerHTML=Q.items.length?'<tr><th></th><th>Vídeo</th><th>Estado</th><th>Tokens</th><th></th></tr>'+Q.items.map(x=>`<tr><td>${QST[x.st][0]}</td><td>${x.kind==='ficha'?`📋 Ficha: ${esc(byId(x.car)?nm(byId(x.car)):'(coche borrado)')}`:`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.yt)}</a>${x.canal?' <span class="mu">'+esc(x.canal)+'</span>':''}`}</td><td style="white-space:normal;min-width:220px">${QST[x.st][1]}${x.st==='proc'?' <span class="mu" id="qrun"></span>':''}${x.msg?'<div class="mu">'+esc(x.msg)+'</div>':''}</td><td>${x.tok?fmtK(x.tok):x.est?'~'+fmtK(x.est):'–'}</td><td>${x.st==='err'||x.st==='skip'||(x.st==='pend'&&x.next>Date.now())?`<button onclick="qRetry('${x.yt}')">${x.st==='pend'?'Ya':'Reintentar'}</button> `:''}${x.st!=='proc'?`<button onclick="qDel('${x.yt}')">✕</button>`:''}</td></tr>`).join(''):''}
 function renderLims(){
  $('lims').innerHTML=LIMF.map(([k,l,mi,ma,st])=>`<label>${l}<input type="number" min="${mi}" max="${ma}" step="${st}" value="${LIM[k]}" onchange="setLim('${k}',this.value,${mi},${ma})"></label>`).join('')+`<label class="row" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${LIM.low?'checked':''} onchange="LIM.low=this.checked;lsJs(LK,LIM);renderLims()">Vídeo a baja resolución</label>`;
  const ps=Math.round((LIM.low?66:258)*LIM.fps+32);
@@ -447,7 +552,7 @@ const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
 // Huellas del último estado conocido: si algo cambia, se le pone la hora (u) para saber qué versión es más nueva.
 let snapC=new Map(),snapCfg='',snapQ=new Map();
 const sansU=o=>{const r=Object.assign({},o);delete r.u;return JSON.stringify(r)};
-const cfgKey=()=>JSON.stringify([S.pr,S.trips,S.wN,S.wE]);
+const cfgKey=()=>JSON.stringify([S.pr,S.trips,S.wN,S.wE,S.routes,S.rp]);
 function snapAll(){snapC=new Map(S.cars.map(c=>[String(c.id),sansU(c)]));snapCfg=cfgKey();snapQ=new Map(Q.items.map(x=>[x.yt,sansU(x)]))}
 function trackAll(){const now=Date.now();let ch=false;S.del=S.del||{};Q.qdel=Q.qdel||{};
  const seen=new Set();S.cars.forEach(c=>{const k=String(c.id),v=sansU(c);seen.add(k);if(snapC.get(k)!==v){c.u=now;snapC.set(k,v);ch=true}});
@@ -456,10 +561,10 @@ function trackAll(){const now=Date.now();let ch=false;S.del=S.del||{};Q.qdel=Q.q
  const sq=new Set();Q.items.forEach(x=>{const v=sansU(x);sq.add(x.yt);if(snapQ.get(x.yt)!==v){x.u=now;snapQ.set(x.yt,v);ch=true}});
  [...snapQ.keys()].forEach(k=>{if(!sq.has(k)){Q.qdel[k]=now;snapQ.delete(k);ch=true}});
  return ch}
-const localDoc=()=>({v:1,cars:S.cars,del:S.del||{},cfg:{pr:S.pr,trips:S.trips,wN:S.wN,wE:S.wE,t:S.cfgT||0},queue:Q.items,qdel:Q.qdel||{}});
+const localDoc=()=>({v:1,cars:S.cars,del:S.del||{},cfg:{pr:S.pr,trips:S.trips,wN:S.wN,wE:S.wE,routes:S.routes,rp:S.rp,t:S.cfgT||0},queue:Q.items,qdel:Q.qdel||{}});
 function applyDoc(d){const cur=qBusy?Q.items.find(x=>x.st==='proc'&&x.by===DEV):null;
  S.cars=d.cars;S.del=d.del;
- if(d.cfg&&(d.cfg.t||0)>(S.cfgT||0)){S.pr=d.cfg.pr;S.trips=d.cfg.trips;S.wN=d.cfg.wN;S.wE=d.cfg.wE;S.cfgT=d.cfg.t}
+ if(d.cfg&&(d.cfg.t||0)>(S.cfgT||0)){S.pr=d.cfg.pr;S.trips=d.cfg.trips;S.wN=d.cfg.wN;S.wE=d.cfg.wE;if(d.cfg.routes)S.routes=d.cfg.routes;if(d.cfg.rp)S.rp=Object.assign({},DEF_RP,d.cfg.rp);S.cfgT=d.cfg.t}
  Q.items=d.queue;Q.qdel=d.qdel;
  if(cur){const i=Q.items.findIndex(x=>x.yt===cur.yt);if(i>=0)Q.items[i]=cur}}
 let syncing=false,syncAgain=false,syncT=null,syMsg='',syOk=0;
@@ -501,11 +606,15 @@ function renderPick(){const L=filt(),by={},cmp=(a,b)=>a.localeCompare(b,'es',{se
  $('pick').innerHTML=marcas.length?marcas.map(m=>`<h3>${esc(m)}</h3><div class="eqg">${by[m].sort((a,b)=>cmp((a.modelo||'')+' '+(a.version||''),(b.modelo||'')+' '+(b.version||''))).map(c=>`<label class="row"><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"><span>${esc(c.modelo||'(sin modelo)')}${c.version?' <span class="mu">'+esc(c.version)+'</span>':''}</span></label>`).join('')}</div>`).join(''):'<p class="mu">No hay coches (o ninguno pasa los filtros).</p>'}
 function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean);
  if(cars.length<2){$('cmp').innerHTML='<tr><td>Selecciona al menos 2 coches.</td></tr>';return}
- let h='<tr><th></th>'+cars.map(c=>`<th>${esc(nm(c))}</th>`).join('')+'</tr>',g='';
+ let h='<tr><th></th>'+cars.map(c=>`<th style="white-space:normal;vertical-align:bottom;min-width:120px">${imgTag(c,120,68)}<div style="margin-top:4px">${esc(nm(c))}</div></th>`).join('')+'</tr>',g='';
  const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
  h+=`<tr><td>Tipo</td>${cars.map(c=>`<td>${esc(c.t||'–')}</td>`).join('')}</tr>`;
  ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
  h+=`<tr><th colspan="${cars.length+1}">Coste por viaje tipo</th></tr>`+S.trips.map(t=>row(`${esc(t.n)} (${t.km} km) €`,cars.map(c=>tripCost(c,t)),'low')).join('');
+ let rh='';S.routes.forEach(r=>CONDS.forEach(([cd,lab])=>{const sims=cars.map(c=>routeSim(c,r,cd));if(sims.every(s=>!s))return;
+  rh+=`<tr><th colspan="${cars.length+1}">${esc(r.n)} (${r.km} km) · ${lab}</th></tr>`+RMET.map(([k,l,f])=>{const vals=sims.map(s=>s?s[k]:null),b=bestIdx(vals,'low');
+   return `<tr><td>${l[0].toUpperCase()+l.slice(1)}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${v==null?'–':(sims[i].est?'≈ ':'')+f(v)}</td>`).join('')+'</tr>'}).join('')}));
+ if(rh)h+=rh+`<tr><td colspan="${cars.length+1}" class="mu" style="white-space:normal">≈ = estimado: falta el consumo real en autopista o el tiempo de carga y se calcula a partir de otros datos (ajustes en Ajustes → Rutas largas). Pulsa «Completar ficha» para buscar los datos reales.</td></tr>`;
  g='';EQ.forEach(e=>{const vals=cars.map(c=>c.eq&&typeof c.eq[e[0]]==='boolean'?c.eq[e[0]]:null);if(vals.every(v=>v==null))return;if(e[2]!==g){g=e[2];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=`<tr><td>${esc(e[1])}</td>`+vals.map(v=>`<td class="${v===true?'best':''}">${v==null?'?':v?'✓':'✗'}</td>`).join('')+'</tr>'});
  $('cmp').innerHTML=h}
 
@@ -523,19 +632,25 @@ function renderWeights(){
  $('we').innerHTML=EQ.map(e=>`<label>${esc(e[1])}<input type="number" min="0" max="10" value="${S.wE[e[0]]||0}" onchange="S.wE['${e[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('')}
 
 /* ---- gráficos ---- */
-function renderChartSel(){const s=$('cparam'),cur=s.value;s.innerHTML='<option value="_score">Puntuación del ranking</option>'+ALLN.map(n=>`<option value="${n[0]}">${n[1]}${n[2]?' ('+n[2]+')':''}</option>`).join('')+S.trips.map((t,i)=>`<option value="_t${i}">Coste: ${esc(t.n)}</option>`).join('');if(cur)s.value=cur;if(!s.value)s.selectedIndex=0}
+function renderChartSel(){const s=$('cparam'),cur=s.value;s.innerHTML='<option value="_score">Puntuación del ranking</option>'+ALLN.map(n=>`<option value="${n[0]}">${n[1]}${n[2]?' ('+n[2]+')':''}</option>`).join('')+S.trips.map((t,i)=>`<option value="_t${i}">Coste: ${esc(t.n)}</option>`).join('')+S.routes.map((r,i)=>CONDS.map(([cd,lab])=>RMET.map(([mk,ml])=>`<option value="_r${i}_${cd}_${mk}">${esc(r.n)} · ${lab.split(' ')[0]} · ${ml}</option>`).join('')).join('')).join('');if(cur)s.value=cur;if(!s.value)s.selectedIndex=0}
 function renderChart(){const k=$('cparam').value,L=filt();let rows;
  if(k==='_score')rows=scoreList(L).map(r=>({n:nm(r.c),v:r.s}));
  else if(/^_t\d+$/.test(k)){const t=S.trips[+k.slice(2)];rows=L.map(c=>({n:nm(c),v:t?tripCost(c,t):null}))}
+ else if(/^_r\d+_/.test(k)){const [,i,cd,mk]=k.match(/^_r(\d+)_(fav|desf)_(\w+)$/)||[];const r=S.routes[+i];rows=L.map(c=>{const s=r&&routeSim(c,r,cd);return{n:nm(c),v:s?s[mk]:null}})}
  else rows=L.map(c=>({n:nm(c),v:val(c,k)}));
+ const fv=/Min$/.test(k)?fmtMin:fmt;
  rows=rows.filter(r=>r.v!=null);const asc=!(k==='_score'||(ALLN.find(n=>n[0]===k)||[])[4]==='high');rows.sort((a,b)=>asc?a.v-b.v:b.v-a.v);
  const m=Math.max(...rows.map(r=>r.v),0)||1;
- $('chart').innerHTML=rows.length?rows.map(r=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v">${fmt(r.v)}</span></div>`).join(''):'<p class="mu">Sin datos para este parámetro.</p>'}
+ $('chart').innerHTML=rows.length?rows.map(r=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v">${fv(r.v)}</span></div>`).join(''):'<p class="mu">Sin datos para este parámetro.</p>'}
 
 /* ---- ajustes ---- */
-function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
+function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();renderRoutes();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
  $('prices').innerHTML=Object.keys(Lb).map(k=>`<label>${Lb[k]}<input type="number" step="0.01" value="${S.pr[k]}" onchange="S.pr.${k}=+this.value;save();refresh()"></label>`).join('');
  $('trips').innerHTML='<tr><th>Viaje</th><th>km</th><th>% carretera</th></tr>'+S.trips.map((t,i)=>`<tr><td><input type="text" value="${esc(t.n)}" onchange="S.trips[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${t.km}" onchange="S.trips[${i}].km=+this.value;save();refresh()"></td><td><input type="number" value="${t.road}" onchange="S.trips[${i}].road=+this.value;save();refresh()"></td></tr>`).join('')}
+const RPF=[['soc0','Carga al salir (%)'],['socMin','Llegar a cada parada con (%)'],['socMax','Cargar hasta (%)'],['over','Minutos extra por parada'],['fReal','Autopista templado / consumo real mixto (×)'],['fWltp','Autopista templado / consumo WLTP (×)'],['fFrio','Frío / templado (×)'],['viento','Viento en contra (×)'],['cargaFrio','Carga más lenta con frío (×)'],['combAut','Combustible autopista / homologado (×)'],['combF','Combustible con frío y viento (×)']];
+function renderRoutes(){
+ $('routes').innerHTML='<tr><th>Ruta</th><th>km</th><th>Horas conduciendo</th><th></th></tr>'+S.routes.map((r,i)=>`<tr><td><input type="text" value="${esc(r.n)}" onchange="S.routes[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${r.km}" onchange="S.routes[${i}].km=+this.value;save();refresh()"></td><td><input type="number" step="0.1" value="${r.h}" onchange="S.routes[${i}].h=+this.value;save();refresh()"></td><td><button onclick="S.routes.splice(${i},1);save();renderAll()">✕</button></td></tr>`).join('');
+ $('rparams').innerHTML=RPF.map(([k,l])=>`<label>${l}<input type="number" step="any" value="${S.rp[k]}" onchange="S.rp['${k}']=num(this.value)??DEF_RP['${k}'];save();refresh()"></label>`).join('')+`<label>&nbsp;<button onclick="S.rp=Object.assign({},DEF_RP);save();renderAll()">Valores por defecto</button></label>`}
 function exp(){$('io').value=JSON.stringify(S)}
 function imp(){try{const d=JSON.parse($('io').value);if(!d.cars)throw 0;S=d;S.f=S.f||{t:[],eq:[]};S.sel=S.sel||[];save();renderAll()}catch(e){alert('JSON no válido')}}
 
