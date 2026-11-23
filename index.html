@@ -119,6 +119,7 @@ a{color:var(--ac)}
 <div class="g" id="rparams"></div>
 <p class="mu">Los km y las horas de conducción son aproximados: ajústalos con Google Maps a tu ruta habitual. En los eléctricos se sale con la carga indicada, se para cuando la batería baja al mínimo y se carga hasta el máximo (en la última parada, solo lo necesario para llegar con el mínimo). «Favorable» usa el consumo real en autopista con clima templado; «desfavorable», el consumo con frío multiplicado por el viento en contra, y la carga es más lenta. El coste supone que sales cargado en casa y el resto lo cargas en la carretera.</p>
 <h2 style="margin-top:14px">Datos</h2>
+<p class="mu">Versión de la app: <span id="appver"></span> (se actualiza sola cuando hay una nueva).</p>
 <p class="mu">Se guardan en este navegador. Exporta el JSON como copia de seguridad o para llevarlo a otro dispositivo.</p>
 <textarea id="io"></textarea>
 <p><button onclick="exp()">Exportar</button> <button onclick="imp()">Importar (reemplaza todo)</button> <button onclick="if(confirm('¿Borrar toda la base?')){S=def();save();renderAll()}">Reiniciar</button></p>
@@ -126,10 +127,12 @@ a{color:var(--ac)}
 </section>
 
 <script>
+// Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
+const APP_VER='2026-11-23.4';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
-['precio','Precio','€','General','low'],['anio','Año','','General',null],['plazas','Plazas','','General','high'],
+['precio','Precio oficial en España (sin descuentos)','€','General','low'],['precioMin','Precio mínimo con descuentos y ayudas','€','General','low'],['anio','Año','','General',null],['plazas','Plazas','','General','high'],
 ['largo','Largo','mm','Dimensiones','low'],['ancho','Ancho','mm','Dimensiones','low'],['alto','Alto','mm','Dimensiones','low'],['batalla','Batalla','mm','Dimensiones','high'],['altSuelo','Altura libre al suelo','mm','Dimensiones','high'],['peso','Peso','kg','Dimensiones','low'],['mal','Maletero','L','Dimensiones','high'],['malMax','Maletero máx. (asientos abatidos)','L','Dimensiones','high'],['piernasTras','Espacio piernas plazas traseras','mm','Dimensiones','high'],
 ['cv','Potencia','CV','Prestaciones','high'],['par','Par motor','Nm','Prestaciones','high'],['acel','0-100 km/h','s','Prestaciones','low'],['vmax','Velocidad máx.','km/h','Prestaciones','high'],
 ['kwh100','Consumo eléctrico','kWh/100km','Energía','low'],['l100','Consumo combustible','L/100km','Energía','low'],['bat','Batería útil','kWh','Energía','high'],['rango','Autonomía total WLTP','km','Energía','high'],['rangoE','Autonomía eléctrica (PHEV)','km','Energía','high'],['dc','Potencia carga DC','kW','Energía','high'],['ac','Potencia carga AC','kW','Energía','high'],['c1080','Carga 10-80%','min','Energía','low'],['dcMedia','Potencia media carga 10-80%','kW','Energía','high'],
@@ -279,6 +282,8 @@ Reglas:
 - Usa únicamente lo que se dice o se muestra en el vídeo. Si algo no se menciona, pon null. No inventes ni completes con conocimiento propio.
 - Números sin unidades (punto decimal). Usa las unidades indicadas en cada comentario.
 - "t" solo puede ser: BEV, PHEV, HEV, Gasolina o Diésel.
+- "precio": SOLO el precio oficial de tarifa en España (PVP sin descuentos, promociones ni ayudas). Si el vídeo da precios de otro país (p. ej. Alemania) o con descuentos, pon null.
+- "precioMin": precio más bajo en España con descuentos, promociones y ayudas (p. ej. MOVES), solo si el vídeo lo dice para España; si no, null.
 - En "eq": true solo si se dice que el coche lo lleva; false solo si se dice expresamente que no lo tiene; si no se menciona, null.
 - Los campos de opinión (qInt, confort, insonor, dinam, infotain) son notas de 0 a 10 SOLO si el probador da una valoración clara; si no, null.
 - "notas": hasta 10 datos objetivos o hechos relevantes que no encajen en los campos (máx. 15 palabras cada uno).
@@ -396,12 +401,14 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
  Q.items.forEach(x=>{if(x.st==='proc'&&x.by!==DEV&&Date.now()-(x.u||0)>20*60000){x.st='pend';x.msg='Retomado: el dispositivo que lo procesaba dejó de responder'}});
  if(!lsGet(GK)){qMsg='Cola detenida: falta la clave de Gemini en Ajustes.';return renderQ()}
  const pend=Q.items.filter(x=>x.st==='pend');if(!pend.length){qMsg='';return renderQ()}
- const it=pend.find(x=>!x.next||x.next<=Date.now());
+ const ready=pend.filter(x=>!x.next||x.next<=Date.now()),vidOk=usage().req<LIM.dayReq;
+ // Si ya se han hecho los vídeos del día, las fichas (que no cuentan como vídeo) pasan delante.
+ const it=ready.find(x=>vidOk||x.kind==='ficha')||ready[0];
  if(!it){const w=Math.min(...pend.map(x=>x.next))-Date.now();qMsg='Esperando para reintentar: '+fmtT(w)+'.';renderQ();return schedule(w+500)}
  const wait=(Q.last||0)+LIM.gap*1000-Date.now();
  if(wait>0){qMsg='Siguiente vídeo en '+fmtT(wait)+' (pausa entre vídeos).';renderQ();return schedule(Math.min(wait,1000)+50)}
  const u=usage();
- if(u.req>=LIM.dayReq||u.tok>=LIM.dayTok){qMsg='Límite diario alcanzado ('+(u.req>=LIM.dayReq?'vídeos':'tokens')+'). Se reanuda a medianoche.';renderQ();return schedule(Math.min(msToMidnight(),3600000))}
+ if((u.req>=LIM.dayReq&&it.kind!=='ficha')||u.tok>=LIM.dayTok){qMsg='Límite diario alcanzado ('+(u.req>=LIM.dayReq?'vídeos':'tokens')+'). Se reanuda a medianoche.';renderQ();return schedule(Math.min(msToMidnight(),3600000))}
  qBusy=true;it.st='proc';it.by=DEV;it.msg=it.kind==='ficha'?'Preparando la búsqueda…':'Consultando tamaño del vídeo…';qMsg='Procesando…';saveQ();renderQ();
  try{
   if(it.kind==='ficha'){await doFicha(it,u);return}
@@ -433,7 +440,14 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
    const w=[2,5,15,30,60,120][it.tries||0]*60000;it.tries=(it.tries||0)+1;it.st='pend';it.next=Date.now()+w;
    it.msg=(e.status===503?'Gemini está saturado (alta demanda)':e instanceof TypeError?'Sin conexión con Google':'Fallo temporal de Google')+`; reintento ${it.tries} de 6 en ${fmtT(w)}.`}
   else{it.st='err';it.msg='Error: '+((e&&e.msg)||(e&&e.message)||String(e))}
- }finally{clearInterval(qTick);delete it.force;qBusy=false;saveQ();renderQ();schedule(500)}}
+ }finally{clearInterval(qTick);delete it.force;qBusy=false;saveQ();renderQ();if(reloadWanted){syncNow().finally(()=>location.reload());return}schedule(500)}}
+
+/* ---- actualización automática: si hay una versión publicada más nueva, recargar cuando la cola esté libre ---- */
+let reloadWanted=false;
+async function checkUpdate(){if(!/^https:/.test(location.protocol))return;
+ try{const t=await(await fetch('./?u='+Date.now(),{cache:'no-store'})).text();const m=t.match(/APP_VER='([^']+)'/);
+  if(m&&m[1]!==APP_VER){reloadWanted=true;if(!qBusy){await syncNow();location.reload()}}}catch(e){}}
+setInterval(checkUpdate,15*60000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkUpdate()});
 
 /* ---- completar ficha con internet (Gemini + búsqueda de Google) ---- */
 function queueFicha(id,quiet){const c=byId(id);if(!c)return false;const key='ficha-'+id;
@@ -465,6 +479,8 @@ Reglas:
 - Números sin unidades, con punto decimal. null si no lo encuentras con seguridad. No inventes ni estimes.
 - kwh100AutT = consumo real en autopista (~110-120 km/h) con clima templado; kwh100AutF = lo mismo con frío; kwh100Real = consumo real combinado; rangoReal = autonomía real combinada (en ev-database: "Highway - Mild Weather", "Highway - Cold Weather", "Combined").
 - dcMedia = potencia media de carga del 10 al 80 %. bat = capacidad útil de la batería.
+- precio = precio oficial de tarifa (PVP recomendado) en España de esta versión, SIN descuentos, promociones ni ayudas, impuestos incluidos (web del fabricante en España o km77). Nunca precios de otros países.
+- precioMin = precio mínimo en España aplicando descuentos y promociones de la marca y ayudas públicas vigentes (MOVES u otras), si se publica; explica en "notas" qué incluye (p. ej. "precioMin incluye MOVES III y descuento por financiación").
 - Si la versión exacta no aparece, usa la más parecida y dilo en "notas".
 - "fuentes": para cada campo rellenado, la URL de la página de donde sale.
 
@@ -472,8 +488,8 @@ Formato:
 {"campos": {"campo": valor}, "eq": {"clave": true}, "fuentes": {"campo": "https://..."}, "imagenes": ["https://.../foto.jpg"], "notas": ["máx. 5 notas breves"]}`}
 async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese coche ya no existe';return}
  if(u.tok+20000>LIM.dayTok&&!it.force){it.st='pend';it.next=Date.now()+msToMidnight();it.msg='Esperando a mañana: no cabe en el presupuesto de hoy.';return}
- const miss=NUM.filter(n=>num(c[n[0]])==null).map(n=>n[0]),missEq=EQ.filter(e=>!c.eq||typeof c.eq[e[0]]!=='boolean').map(e=>e[0]);
- if(!miss.length&&!missEq.length&&carImg(c)){it.st='ok';it.msg='La ficha ya estaba completa';return}
+ // Los precios se comprueban siempre en fuentes españolas (los vídeos suelen dar precios de otros países).
+ const miss=[...new Set(['precio','precioMin',...NUM.filter(n=>num(c[n[0]])==null).map(n=>n[0])])],missEq=EQ.filter(e=>!c.eq||typeof c.eq[e[0]]!=='boolean').map(e=>e[0]);
  it.msg='Gemini está buscando en internet…';it.t0=Date.now();renderQ();Q.last=Date.now();saveQ();
  qTick=setInterval(()=>{const el=document.getElementById('qrun');if(el)el.textContent=fmtT(Date.now()-it.t0)},1000);
  const body={contents:[{role:'user',parts:[{text:fichaPrompt(c,miss,missEq)}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.1}};
@@ -482,7 +498,7 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
   try{j=await gapi('generateContent',body,m);it.model=m}
   catch(e){const pasa=e&&([404,429,500,502,503,504].includes(e.status)||e instanceof TypeError);if(!pasa||k===chain.length-1)throw e;
    it.msg=`${m}: ${e.status===503?'saturado':e.status===429?'sin cuota':e.status===404?'no disponible':'fallo temporal'}. Probando con ${chain[k+1]}…`;renderQ()}}
- const tok=(j.usageMetadata||{}).totalTokenCount||0;addUse(tok,1);it.tok=tok;
+ const tok=(j.usageMetadata||{}).totalTokenCount||0;addUse(tok,0);it.tok=tok;
  const cand=j.candidates&&j.candidates[0],txt=((cand&&cand.content&&cand.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
  const mt=txt.match(/```(?:json)?\s*([\s\S]*?)```/);let o;
  try{o=JSON.parse(mt?mt[1]:txt.slice(txt.indexOf('{'),txt.lastIndexOf('}')+1))}catch(e){it.st='err';it.msg='Gemini no devolvió un JSON válido'+(cand&&cand.finishReason&&cand.finishReason!=='STOP'?' ('+cand.finishReason+')':'');return}
@@ -688,7 +704,7 @@ function renderChart(){if(!$('cgrp'))return;const cars=chartCars(),grp=CG.find(x
  $('chart').innerHTML=(cards.join('')||'<p class="mu">Ningún coche tiene datos de este grupo todavía. Prueba «Completar ficha».</p>')+(empty.length&&cards.some(Boolean)?`<p class="mu" style="grid-column:1/-1">Sin datos todavía: ${empty.map(esc).join(' · ')}.</p>`:'')}
 
 /* ---- ajustes ---- */
-function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();renderRoutes();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
+function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();renderRoutes();$('appver').textContent=APP_VER;const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
  $('prices').innerHTML=Object.keys(Lb).map(k=>`<label>${Lb[k]}<input type="number" step="0.01" value="${S.pr[k]}" onchange="S.pr.${k}=+this.value;save();refresh()"></label>`).join('');
  $('trips').innerHTML='<tr><th>Viaje</th><th>km</th><th>% carretera</th></tr>'+S.trips.map((t,i)=>`<tr><td><input type="text" value="${esc(t.n)}" onchange="S.trips[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${t.km}" onchange="S.trips[${i}].km=+this.value;save();refresh()"></td><td><input type="number" value="${t.road}" onchange="S.trips[${i}].road=+this.value;save();refresh()"></td></tr>`).join('')}
 const RPF=[['soc0','Carga al salir (%)'],['socMin','Llegar a cada parada con (%)'],['socMax','Cargar hasta (%)'],['over','Minutos extra por parada'],['fReal','Autopista templado / consumo real mixto (×)'],['fWltp','Autopista templado / consumo WLTP (×)'],['fFrio','Frío / templado (×)'],['viento','Viento en contra (×)'],['cargaFrio','Carga más lenta con frío (×)'],['combAut','Combustible autopista / homologado (×)'],['combF','Combustible con frío y viento (×)']];
