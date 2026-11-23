@@ -1,4 +1,6 @@
 # Datos personales: nunca se publican
 datos.json
+fichas-claude.json
+coches-para-fichas*.json
 *.tmp
 .claude/
