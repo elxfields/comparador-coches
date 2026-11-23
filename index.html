@@ -30,7 +30,7 @@ button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#f
 .eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
 .bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:150px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
-.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.pg{display:none}.pg.on{display:block}
+.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:104px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.pg{display:none}.pg.on{display:block}
 textarea{width:100%;height:110px;font:12px monospace}
 a{color:var(--ac)}
 </style>
@@ -88,7 +88,10 @@ a{color:var(--ac)}
 <details class="box"><summary>Pesos de equipamiento (0-10)</summary><div id="we" class="g" style="margin-top:8px"></div></details>
 </div>
 
-<div class="pg" id="pg-chart"><select id="cparam" onchange="renderChart()"></select><div id="chart" style="margin-top:8px"></div></div>
+<div class="pg" id="pg-chart">
+<div class="g"><label>Grupo de datos<select id="cgrp" onchange="S.cgrp=this.value;save();renderChart()"></select></label><label>Coches<select id="cmode" onchange="S.cmode=this.value;save();renderChart()"><option value="all">Todos (con los filtros)</option><option value="comp">Solo los de Comparar</option></select></label></div>
+<p class="mu" id="cleg"></p>
+<div id="chart" class="cgrid"></div></div>
 
 <div class="pg" id="pg-set">
 <h2>Sincronización con Google</h2>
@@ -201,7 +204,7 @@ function routeSim(c,r,cond){const P=S.rp,km=+r.km,driveMin=(+r.h||0)*60,desf=con
  const fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
  let l=num(c.l100Real)!=null?c.l100Real:num(c.l100)!=null?c.l100*P.combAut:null;const est=num(c.l100Real)==null;if(l==null)return null;if(desf)l*=P.combF;
  let kmE=0,eCost=0;if(c.t==='PHEV'&&num(c.rangoE)&&num(c.kwh100)){kmE=Math.min(km,c.rangoE*(desf?0.7:0.9));eCost=kmE*c.kwh100/100*1.1*S.pr.casa}
- return{stops:0,chargeMin:0,driveMin,totalMin:driveMin,cost:(km-kmE)*l/100*fp+eCost,cons:l,est}}
+ return{stops:null,chargeMin:null,driveMin,totalMin:driveMin,cost:(km-kmE)*l/100*fp+eCost,cons:l,est}}
 const fmtMin=m=>{if(m==null)return'–';const t=Math.round(m),h=Math.floor(t/60),mm=t%60;return h?`${h} h ${String(mm).padStart(2,'0')} min`:`${mm} min`};
 const CONDS=[['fav','favorable'],['desf','desfavorable (frío y viento)']];
 const RMET=[['stops','paradas a cargar',v=>v],['chargeMin','tiempo cargando',fmtMin],['totalMin','tiempo total',fmtMin],['cost','coste €',v=>fmt(Math.round(v*100)/100)]];
@@ -226,6 +229,12 @@ function showTab(){TABS.forEach(([k])=>$('pg-'+k).classList.toggle('on',S.tab===
 
 /* ---- base de datos ---- */
 function completeness(c){const n=NUM.length+EQ.length;let h=0;NUM.forEach(x=>{if(num(c[x[0]])!=null)h++});EQ.forEach(e=>{if(c.eq&&typeof c.eq[e[0]]==='boolean')h++});return Math.round(100*h/n)}
+// Datos completos por apartado: [[nombre, tenidos, total], …] (apartados de datos + equipamiento)
+function compGroups(c){const g=[...new Set(NUM.map(n=>n[3]))].map(gr=>{const ks=NUM.filter(n=>n[3]===gr);return[gr,ks.filter(n=>num(c[n[0]])!=null).length,ks.length]});
+ g.push(['Equipamiento',EQ.filter(e=>c.eq&&typeof c.eq[e[0]]==='boolean').length,EQ.length]);return g}
+function compHtml(c){const p=completeness(c),col=p>=75?'var(--ok)':p>=40?'var(--ac)':'#c0392b';
+ return `<div style="margin:8px 0"><b>Datos completos: ${p} %</b><div style="background:var(--bg);border-radius:6px;height:8px;margin:4px 0 6px"><div style="width:${p}%;height:100%;border-radius:6px;background:${col}"></div></div>`+
+ `<div class="mu">${compGroups(c).map(([g,h,t])=>`<span style="white-space:nowrap;margin-right:10px">${esc(g)} <b>${h}/${t}</b></span>`).join(' ')}</div></div>`}
 function renderTable(){const L=filt();$('cnt').textContent=`${L.length} de ${S.cars.length} coches (filtros activos: ${nActive()})`;$('fsum').textContent=`Filtros (${nActive()} activos)`;
  if(!S.cars.length){$('tbl').innerHTML='<tr><td>Base vacía. Añade tu primer coche desde un vídeo o a mano.</td></tr>';return}
  $('tbl').innerHTML='<tr><th>Comparar</th><th></th><th>Coche</th><th>Tipo</th><th>Precio €</th><th>CV</th><th>Largo mm</th><th>Maletero L</th><th>Autonomía km</th><th>€/100 km</th><th>Datos</th><th>Fuentes</th><th></th></tr>'+
@@ -240,7 +249,7 @@ function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  const webMark=k=>c.fsrc&&c.fsrc[k]?(/^https?:/.test(c.fsrc[k])?` <a href="${esc(c.fsrc[k])}" target="_blank" rel="noopener" title="Dato sacado de internet: ${esc(c.fsrc[k])}">🌐</a>`:' <span title="Dato sacado de internet">🌐</span>'):'';
  const webSrc=[...new Set(Object.values(c.fsrc||{}).filter(u=>/^https?:/.test(u)))];
  $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
- <div style="margin-top:8px">${imgTag(c,240,135)}</div>
+ <div style="margin-top:8px">${imgTag(c,240,135)}</div>${compHtml(c)}
  <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha con internet</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
  <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
  grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
@@ -298,7 +307,7 @@ function mergeOne(o,url,canal){if(!o||typeof o!=='object'||!o.modelo)return null
 // Devuelve la lista de líneas de resultado (HTML). Lanza error si el JSON no es válido.
 function mergeText(txt,url,canal){txt=String(txt).trim().replace(/^```(?:json)?/i,'').replace(/```$/,'').trim();
  let d=JSON.parse(txt);if(!Array.isArray(d))d=Array.isArray(d.coches)?d.coches:[d];
- const out=[];d.forEach(o=>{const r=mergeOne(o,url,canal);if(r)out.push(`<div>${r.isNew?'<b>Nuevo</b>':'<b>Actualizado</b>'}: ${esc(nm(r.c))}${r.ch.length?'<br>&nbsp;&nbsp;Cambios: '+r.ch.map(esc).join('; '):''}</div>`)});
+ const out=[];out.newIds=[];d.forEach(o=>{const r=mergeOne(o,url,canal);if(r){if(r.isNew)out.newIds.push(r.c.id);out.push(`<div>${r.isNew?'<b>Nuevo</b>':'<b>Actualizado</b>'}: ${esc(nm(r.c))}${r.ch.length?'<br>&nbsp;&nbsp;Cambios: '+r.ch.map(esc).join('; '):''}</div>`)}});
  save();renderAll();return out}
 function doMerge(){let out;
  try{out=mergeText($('vjson').value,firstUrl(),$('vcan').value.trim())}catch(e){$('mlog').textContent='JSON no válido. Comprueba que has pegado solo la respuesta de Gemini.';return}
@@ -409,6 +418,7 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
   if(!txt){it.st='err';it.msg='Gemini no devolvió datos'+(cand&&cand.finishReason?' ('+cand.finishReason+')':'');return}
   let out;try{out=mergeText(txt,it.url,it.canal||'')}catch(e){$('vjson').value=txt;it.st='err';it.msg='La respuesta no es un JSON válido (la he dejado en el modo manual para revisarla)';return}
   it.st='ok';it.msg=out.length?out.map(h=>h.replace(/<br>.*$/,'').replace(/<[^>]+>/g,'')).join(' · '):'No se encontró ningún coche en el vídeo';if(it.model&&it.model!==model())it.msg+=` (con ${it.model})`;it.res=out.join('');
+  if(LIM.autoFicha!==false&&out.newIds.length){const n=out.newIds.filter(id=>queueFicha(id,true)).length;if(n)it.msg+=` · ${n} ficha${n>1?'s':''} a completar con internet`}
  }catch(e){
   if(e&&e.status===429){it.st='pend';it.tries=(it.tries||0)+1;
    const w=e.daily?3600000:Math.max(15,e.retry||60*it.tries)*1000;it.next=Date.now()+w;
@@ -485,7 +495,7 @@ function renderQ(){if(!$('qtbl'))return;const u=usage();
  $('qstat').innerHTML=`Hoy: <b>${fmtK(u.tok)}</b> de ${fmtK(LIM.dayTok)} tokens · <b>${u.req}</b> de ${LIM.dayReq} vídeos`+(Q.items.length?` · Cola: ${n('pend')+n('proc')} pendientes, ${n('ok')} hechos${n('err')?', '+n('err')+' con error':''}${n('skip')?', '+n('skip')+' saltados':''}`:'')+(qMsg?`<br>${esc(qMsg)}`:'');
  $('qtbl').innerHTML=Q.items.length?'<tr><th></th><th>Vídeo</th><th>Estado</th><th>Tokens</th><th></th></tr>'+Q.items.map(x=>`<tr><td>${QST[x.st][0]}</td><td>${x.kind==='ficha'?`📋 Ficha: ${esc(byId(x.car)?nm(byId(x.car)):'(coche borrado)')}`:`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.yt)}</a>${x.canal?' <span class="mu">'+esc(x.canal)+'</span>':''}`}</td><td style="white-space:normal;min-width:220px">${QST[x.st][1]}${x.st==='proc'?' <span class="mu" id="qrun"></span>':''}${x.msg?'<div class="mu">'+esc(x.msg)+'</div>':''}</td><td>${x.tok?fmtK(x.tok):x.est?'~'+fmtK(x.est):'–'}</td><td>${x.st==='err'||x.st==='skip'||(x.st==='pend'&&x.next>Date.now())?`<button onclick="qRetry('${x.yt}')">${x.st==='pend'?'Ya':'Reintentar'}</button> `:''}${x.st!=='proc'?`<button onclick="qDel('${x.yt}')">✕</button>`:''}</td></tr>`).join(''):''}
 function renderLims(){
- $('lims').innerHTML=LIMF.map(([k,l,mi,ma,st])=>`<label>${l}<input type="number" min="${mi}" max="${ma}" step="${st}" value="${LIM[k]}" onchange="setLim('${k}',this.value,${mi},${ma})"></label>`).join('')+`<label class="row" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${LIM.low?'checked':''} onchange="LIM.low=this.checked;lsJs(LK,LIM);renderLims()">Vídeo a baja resolución</label>`;
+ $('lims').innerHTML=LIMF.map(([k,l,mi,ma,st])=>`<label>${l}<input type="number" min="${mi}" max="${ma}" step="${st}" value="${LIM[k]}" onchange="setLim('${k}',this.value,${mi},${ma})"></label>`).join('')+`<label class="row" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${LIM.low?'checked':''} onchange="LIM.low=this.checked;lsJs(LK,LIM);renderLims()">Vídeo a baja resolución</label>`+`<label class="row" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" ${LIM.autoFicha!==false?'checked':''} onchange="LIM.autoFicha=this.checked;lsJs(LK,LIM)">Completar con internet la ficha de cada coche nuevo (~5-20 k tokens)</label>`;
  const ps=Math.round((LIM.low?66:258)*LIM.fps+32);
  $('limhint').innerHTML=`Con estos ajustes, un vídeo gasta aprox. <b>${fmtK(ps*60)} tokens por minuto</b>: uno de 15 min ≈ ${fmtK(ps*900)} tokens. El máximo por vídeo equivale a unos ${Math.round(LIM.vidTok/ps/60)} min de vídeo. <button onclick="LIM=Object.assign({},LDEF);lsJs(LK,LIM);renderLims();renderQ()">Valores por defecto</button>`}
 function setLim(k,v,mi,ma){v=num(v);if(v==null)v=LDEF[k];LIM[k]=Math.min(ma,Math.max(mi,v));lsJs(LK,LIM);renderLims();renderQ();schedule(0)}
@@ -609,6 +619,8 @@ function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean)
  let h='<tr><th></th>'+cars.map(c=>`<th style="white-space:normal;vertical-align:bottom;min-width:120px">${imgTag(c,120,68)}<div style="margin-top:4px">${esc(nm(c))}</div></th>`).join('')+'</tr>',g='';
  const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
  h+=`<tr><td>Tipo</td>${cars.map(c=>`<td>${esc(c.t||'–')}</td>`).join('')}</tr>`;
+ h+=row('Datos completos (%)',cars.map(c=>completeness(c)),'high',v=>v+' %');
+ h+=`<tr><td class="mu">Por apartado</td>${cars.map(c=>`<td class="mu" style="white-space:normal;min-width:120px">${compGroups(c).filter(([,hh,t])=>hh<t).map(([g,hh,t])=>`${esc(g)} ${hh}/${t}`).join('<br>')||'Todo completo'}</td>`).join('')}</tr>`;
  ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
  h+=`<tr><th colspan="${cars.length+1}">Coste por viaje tipo</th></tr>`+S.trips.map(t=>row(`${esc(t.n)} (${t.km} km) €`,cars.map(c=>tripCost(c,t)),'low')).join('');
  let rh='';S.routes.forEach(r=>CONDS.forEach(([cd,lab])=>{const sims=cars.map(c=>routeSim(c,r,cd));if(sims.every(s=>!s))return;
@@ -631,17 +643,39 @@ function renderWeights(){
  $('wn').innerHTML=ALLN.filter(n=>n[4]).map(n=>`<label>${n[1]}<input type="number" min="0" max="10" value="${S.wN[n[0]]||0}" onchange="S.wN['${n[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('');
  $('we').innerHTML=EQ.map(e=>`<label>${esc(e[1])}<input type="number" min="0" max="10" value="${S.wE[e[0]]||0}" onchange="S.wE['${e[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('')}
 
-/* ---- gráficos ---- */
-function renderChartSel(){const s=$('cparam'),cur=s.value;s.innerHTML='<option value="_score">Puntuación del ranking</option>'+ALLN.map(n=>`<option value="${n[0]}">${n[1]}${n[2]?' ('+n[2]+')':''}</option>`).join('')+S.trips.map((t,i)=>`<option value="_t${i}">Coste: ${esc(t.n)}</option>`).join('')+S.routes.map((r,i)=>CONDS.map(([cd,lab])=>RMET.map(([mk,ml])=>`<option value="_r${i}_${cd}_${mk}">${esc(r.n)} · ${lab.split(' ')[0]} · ${ml}</option>`).join('')).join('')).join('');if(cur)s.value=cur;if(!s.value)s.selectedIndex=0}
-function renderChart(){const k=$('cparam').value,L=filt();let rows;
- if(k==='_score')rows=scoreList(L).map(r=>({n:nm(r.c),v:r.s}));
- else if(/^_t\d+$/.test(k)){const t=S.trips[+k.slice(2)];rows=L.map(c=>({n:nm(c),v:t?tripCost(c,t):null}))}
- else if(/^_r\d+_/.test(k)){const [,i,cd,mk]=k.match(/^_r(\d+)_(fav|desf)_(\w+)$/)||[];const r=S.routes[+i];rows=L.map(c=>{const s=r&&routeSim(c,r,cd);return{n:nm(c),v:s?s[mk]:null}})}
- else rows=L.map(c=>({n:nm(c),v:val(c,k)}));
- const fv=/Min$/.test(k)?fmtMin:fmt;
- rows=rows.filter(r=>r.v!=null);const asc=!(k==='_score'||(ALLN.find(n=>n[0]===k)||[])[4]==='high');rows.sort((a,b)=>asc?a.v-b.v:b.v-a.v);
- const m=Math.max(...rows.map(r=>r.v),0)||1;
- $('chart').innerHTML=rows.length?rows.map(r=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v">${fv(r.v)}</span></div>`).join(''):'<p class="mu">Sin datos para este parámetro.</p>'}
+/* ---- gráficos (agrupados por tema; todos los de un grupo en la misma pantalla) ---- */
+const nSpec=k=>{const n=ALLN.find(x=>x[0]===k);return n?{t:n[1]+(n[2]?' ('+n[2]+')':''),dir:n[4]||'low',get:c=>val(c,k)}:null};
+const cntEq=(c,cat)=>{const es=EQ.filter(e=>!cat||e[2]===cat);if(!c.eq||!es.some(e=>typeof c.eq[e[0]]==='boolean'))return null;return es.filter(e=>c.eq[e[0]]===true).length};
+const routeSpecs=(only)=>S.routes.flatMap(r=>RMET.filter(([mk])=>!only||only.includes(mk)).map(([mk,ml,f])=>({t:`${r.n} · ${ml}`,dir:'low',fmt:f,
+ pair:c=>{const a=routeSim(c,r,'fav'),b=routeSim(c,r,'desf');return[a?a[mk]:null,b?b[mk]:null,(a&&a.est)||(b&&b.est)]}})));
+const tripSpecs=()=>S.trips.map(t=>({t:`Coste ${t.n} (${t.km} km) €`,dir:'low',get:c=>tripCost(c,t)}));
+const CG=[
+ ['costes','Precio y costes',()=>[nSpec('precio'),nSpec('coste100'),...tripSpecs(),...routeSpecs(['cost'])]],
+ ['viajes','Viajes y rutas',()=>[...routeSpecs(),...tripSpecs()]],
+ ['prest','Prestaciones',()=>['cv','par','acel','vmax'].map(nSpec)],
+ ['consumo','Consumos y autonomía',()=>['kwh100Real','kwh100AutT','kwh100AutF','kwh100','l100Real','l100','rangoReal','rango','rangoE','bat'].map(nSpec)],
+ ['carga','Carga',()=>['dcMedia','dc','ac','c1080'].map(nSpec)],
+ ['dim','Dimensiones y espacio',()=>['mal','malMax','piernasTras','plazas','largo','ancho','alto','batalla','altSuelo','peso'].map(nSpec)],
+ ['seg','Garantía y seguridad',()=>['gar','garBat','ncap'].map(nSpec)],
+ ['opinion','Opinión de los probadores',()=>['qInt','confort','insonor','dinam','infotain'].map(nSpec)],
+ ['equip','Equipamiento',()=>[{t:'Equipamiento total (elementos que lleva)',dir:'high',get:c=>cntEq(c)},...[...new Set(EQ.map(e=>e[2]))].map(cat=>({t:`${cat} (de ${EQ.filter(e=>e[2]===cat).length})`,dir:'high',get:c=>cntEq(c,cat)}))]],
+ ['punt','Puntuación y datos',()=>{const sc=new Map(scoreList(filt()).map(r=>[r.c.id,r.s]));return[{t:'Puntuación del ranking',dir:'high',get:c=>sc.get(c.id)??null},{t:'Datos completos (%)',dir:'high',get:c=>completeness(c)},nSpec('anio')]}]
+];
+function chartCars(){return S.cmode==='comp'?S.sel.map(byId).filter(Boolean):filt()}
+function renderChartSel(){const g=$('cgrp');if(!g)return;g.innerHTML=CG.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');g.value=CG.some(x=>x[0]===S.cgrp)?S.cgrp:'costes';$('cmode').value=S.cmode==='comp'?'comp':'all'}
+const fmtMinS=m=>{const t=Math.round(m),h=Math.floor(t/60),mm=t%60;return h?`${h}h${String(mm).padStart(2,'0')}`:`${mm} min`};
+function chartCard(sp,cars){const f=sp.fmt===fmtMin?fmtMinS:(sp.fmt||fmt);
+ if(sp.pair){let rows=cars.map(c=>{const [a,b,e]=sp.pair(c);return{n:nm(c),a,b,e}}).filter(r=>r.a!=null||r.b!=null);if(!rows.length)return'';
+  rows.sort((x,y)=>(x.a??x.b)-(y.a??y.b));const m=Math.max(...rows.flatMap(r=>[r.a||0,r.b||0]))||1;
+  return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t" style="display:flex;flex-direction:column;gap:2px;background:none;height:auto"><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--ac);width:${Math.max(0,100*(r.a||0)/m)}%"></span></span><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:#e8913a;width:${Math.max(0,100*(r.b||0)/m)}%"></span></span></span><span class="v ${i===0?'best':''}" style="line-height:1.15">${r.e?'≈ ':''}${r.a==null?'–':f(r.a)}<br>${r.e?'≈ ':''}${r.b==null?'–':f(r.b)}</span></div>`).join('')+'</div>'}
+ let rows=cars.map(c=>({n:nm(c),v:sp.get(c)})).filter(r=>r.v!=null);if(!rows.length)return'';
+ rows.sort((a,b)=>sp.dir==='high'?b.v-a.v:a.v-b.v);const m=Math.max(...rows.map(r=>r.v),0)||1;
+ return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v ${i===0&&rows.length>1?'best':''}">${f(r.v)}</span></div>`).join('')+'</div>'}
+function renderChart(){if(!$('cgrp'))return;const cars=chartCars(),grp=CG.find(x=>x[0]===S.cgrp)||CG[0];
+ if(S.cmode==='comp'&&cars.length<1){$('chart').innerHTML='<p class="mu">No hay coches marcados en Comparar.</p>';$('cleg').innerHTML='';return}
+ const specs=grp[2]().filter(Boolean),cards=specs.map(sp=>chartCard(sp,cars)),empty=specs.filter((sp,i)=>!cards[i]).map(sp=>sp.t);
+ $('cleg').innerHTML=`${cars.length} coche${cars.length===1?'':'s'} · el mejor de cada gráfica, arriba y en verde`+(specs.some(s=>s.pair)?' · <span style="color:var(--ac)">■</span> favorable <span style="color:#e8913a">■</span> desfavorable (frío y viento) · ≈ estimado':'');
+ $('chart').innerHTML=(cards.join('')||'<p class="mu">Ningún coche tiene datos de este grupo todavía. Prueba «Completar ficha».</p>')+(empty.length&&cards.some(Boolean)?`<p class="mu" style="grid-column:1/-1">Sin datos todavía: ${empty.map(esc).join(' · ')}.</p>`:'')}
 
 /* ---- ajustes ---- */
 function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();renderRoutes();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
