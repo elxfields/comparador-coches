@@ -52,7 +52,7 @@ a{color:var(--ac)}
 <details class="box" open><summary>Añadir desde un vídeo de YouTube</summary>
 <p class="mu" style="margin:8px 0">Pega uno o varios enlaces (uno por línea): se añaden a la cola y se procesan por detrás, de uno en uno, respetando los límites de uso que pongas en Ajustes. Los datos se fusionan solos en la base. La cola avanza mientras esta página esté abierta; si la cierras, sigue donde se quedó al volver a abrirla.</p>
 <div class="g"><label>Enlaces de YouTube<textarea id="vurl" style="height:58px" placeholder="https://youtube.com/watch?v=..." onpaste="setTimeout(addFromBox,0)"></textarea></label><label>Canal / medio (opcional)<input type="text" id="vcan"></label></div>
-<p><button class="p" onclick="addFromBox()">Añadir a la cola</button> <button id="qtog" onclick="toggleQ()">Pausar cola</button> <button onclick="clearDone()">Quitar terminados</button></p>
+<p><button class="p" onclick="addFromBox()">Añadir a la cola</button> <button id="qtog" onclick="toggleQ()">Pausar cola</button> <button onclick="clearDone()">Quitar terminados</button> <button onclick="retryAll()">Reintentar ya</button></p>
 <p class="mu" id="qstat"></p>
 <div class="sc"><table id="qtbl"></table></div>
 <div id="mlog" class="mu"></div>
@@ -98,7 +98,8 @@ a{color:var(--ac)}
 <p><button onclick="syncNow()">Sincronizar ahora</button></p>
 <p class="mu">Coches, ajustes (precios, viajes, pesos) y la cola de vídeos se comparten entre tus dispositivos a través del script de tu cuenta de Google. La URL y la clave se guardan solo en este dispositivo y no se exportan. Filtros, selección para comparar y la clave de Gemini son de cada dispositivo.</p>
 <h2 style="margin-top:14px">Gemini (extracción automática)</h2>
-<div class="g"><label>Clave API de Gemini<input type="password" id="gkey" autocomplete="off" onchange="lsSet(GK,this.value.trim());keyHint();qMsg='';schedule(0)"></label><label>Modelo<input type="text" id="gmodel" onchange="lsSet(GM,this.value.trim());this.value=model()"></label></div>
+<div class="g"><label>Clave API de Gemini<input type="password" id="gkey" autocomplete="off" onchange="lsSet(GK,this.value.trim());lsSet(GFC,'');keyHint();fbHint();qMsg='';schedule(0)"></label><label>Modelo<input type="text" id="gmodel" onchange="lsSet(GM,this.value.trim());this.value=model();fbHint()"></label><label>Modelos de respaldo (vacío = automático)<input type="text" id="gfall" placeholder="se eligen solos" onchange="lsSet(GF,this.value.trim());lsSet(GFC,'');fbHint()"></label></div>
+<p class="mu" id="gfhint"></p>
 <p class="mu" id="ghint"></p>
 <p class="mu">Consíguela gratis en <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → «Create API key». Se guarda solo en este navegador y no se incluye al exportar.</p>
 <h3>Límites de uso de la cola</h3>
@@ -262,6 +263,20 @@ const GK='cmp2_gk',GM='cmp2_gm',DEF_MODEL='gemini-3.8-flash';
 function lsGet(k){try{return localStorage.getItem(k)||''}catch(e){return ''}}
 function lsSet(k,v){try{v?localStorage.setItem(k,v):localStorage.removeItem(k)}catch(e){}}
 const model=()=>lsGet(GM)||DEF_MODEL;
+// Modelos de respaldo: si el principal está saturado (503) o sin cuota (429), se prueba el siguiente.
+// En el plan gratuito cada modelo tiene su propia cuota. Si no se indican, se eligen de la lista de Google (caché 24 h).
+const GF='cmp2_gf',GFC='cmp2_gfc';
+async function fallbacks(){const man=lsGet(GF).split(',').map(s=>s.trim()).filter(Boolean);if(man.length)return man.filter(m=>m!==model());
+ const c=lsJ(GFC,null);if(c&&c.base===model()&&c.t>Date.now()-86400000)return c.list;
+ if(!lsGet(GK))return[];
+ try{const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200',{headers:{'x-goog-api-key':lsGet(GK)}});const j=await r.json();
+  const ver=n=>parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/)||[])[1]||0);
+  const list=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes('generateContent')).map(m=>m.name.replace(/^models\//,''))
+   .filter(n=>n!==model()&&(/^gemini-\d+(\.\d+)?-flash(-lite)?$/.test(n)||/^gemini-flash(-lite)?-latest$/.test(n)))
+   .sort((a,b)=>(/lite/.test(a)-/lite/.test(b))||(ver(b)-ver(a))).slice(0,3);
+  if(r.ok)lsJs(GFC,{t:Date.now(),base:model(),list});return list}catch(e){return[]}}
+async function fbHint(){const el=$('gfhint');if(!el)return;$('gfall').value=lsGet(GF);if(!lsGet(GK)){el.textContent='';return}
+ const l=await fallbacks();el.textContent=l.length?'Respaldo si '+model()+' está saturado o sin cuota: '+l.join(', ')+'.':'Sin modelos de respaldo: si '+model()+' está saturado, la cola esperará y reintentará.'}
 function keyHint(){$('ghint').innerHTML=lsGet(GK)?'<span class="best">Clave guardada.</span> Los enlaces que añadas a la cola se procesan solos.':'Sin clave: la cola no procesa nada (puedes usar el modo manual).'}
 function ytId(u){const m=String(u||'').match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([\w-]{11})/);return m?m[1]:null}
 
@@ -297,6 +312,7 @@ function addFromBox(){const txt=$('vurl').value,canal=$('vcan').value.trim();
  renderQ();schedule(300)}
 function toggleQ(){Q.paused=!Q.paused;saveQ();renderQ();if(!Q.paused)schedule(0)}
 function clearDone(){Q.items=Q.items.filter(x=>x.st!=='ok'&&x.st!=='skip');saveQ();renderQ()}
+function retryAll(){let n=0;Q.items.forEach(x=>{if(x.st==='err'||(x.st==='pend'&&x.next>Date.now())){x.st='pend';x.next=0;x.tries=0;x.msg='';n++}});Q.last=0;saveQ();renderQ();$('mlog').textContent=n?`${n} vídeo${n>1?'s':''} vuelve${n>1?'n':''} a la cola ahora.`:'No hay vídeos con error ni esperando.';schedule(0)}
 function qRetry(id){const x=Q.items.find(i=>i.yt===id);if(!x||x.st==='proc')return;x.st='pend';x.next=0;x.msg='';x.tries=0;x.force=true;saveQ();renderQ();schedule(0)}
 function qDel(id){Q.items=Q.items.filter(i=>i.yt!==id||i.st==='proc');saveQ();renderQ()}
 function schedule(ms){clearTimeout(qTimer);qTimer=setTimeout(runQ,Math.max(0,ms))}
@@ -304,8 +320,8 @@ function schedule(ms){clearTimeout(qTimer);qTimer=setTimeout(runQ,Math.max(0,ms)
 function reqBody(url,opt){const part={fileData:{fileUri:url}},gc={responseMimeType:'application/json',temperature:0.1};
  if(opt){part.videoMetadata={fps:LIM.fps};if(LIM.low)gc.mediaResolution='MEDIA_RESOLUTION_LOW';gc.thinkingConfig={thinkingLevel:'low'}}
  return{contents:[{role:'user',parts:[part,{text:promptText(url)}]}],generationConfig:gc}}
-async function gapi(method,body){
- const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model())}:${method}`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':lsGet(GK)},body:JSON.stringify(body)});
+async function gapi(method,body,mdl){
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(mdl||model())}:${method}`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':lsGet(GK)},body:JSON.stringify(body)});
  const j=await r.json().catch(()=>null);
  if(!r.ok){const er=(j&&j.error)||{},ri=(er.details||[]).find(d=>/RetryInfo/.test(d['@type']||''));
   const qf=(er.details||[]).filter(d=>/QuotaFailure/.test(d['@type']||'')).flatMap(d=>d.violations||[]).map(v=>v.quotaId||v.quotaMetric||'').join(' ');
@@ -335,12 +351,17 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
   it.msg='Gemini está viendo el vídeo'+(c.tok!=null?` (~${fmtK(c.tok)} tokens)`:'')+'…';it.t0=Date.now();renderQ();
   qTick=setInterval(()=>{const el=document.getElementById('qrun');if(el)el.textContent=fmtT(Date.now()-it.t0)},1000);
   Q.last=Date.now();saveQ();
-  let j;try{j=await gapi('generateContent',reqBody(it.url,c.opt))}catch(e){if(c.opt&&optErr(e)){j=await gapi('generateContent',reqBody(it.url,false))}else throw e}
+  const chain=[model(),...await fallbacks()];let j=null,lastE=null;it.model=null;
+  for(let k=0;k<chain.length&&!j;k++){const m=chain[k];
+   try{try{j=await gapi('generateContent',reqBody(it.url,c.opt),m)}catch(e){if(c.opt&&optErr(e))j=await gapi('generateContent',reqBody(it.url,false),m);else throw e}it.model=m}
+   catch(e){lastE=e;const pasa=e&&([404,429,500,502,503,504].includes(e.status)||e instanceof TypeError);
+    if(!pasa||k===chain.length-1)throw e;
+    it.msg=`${m}: ${e.status===503?'saturado':e.status===429?'sin cuota':e.status===404?'no disponible':'fallo temporal'}. Probando con ${chain[k+1]}…`;it.t0=Date.now();renderQ()}}
   const um=j.usageMetadata||{},tok=um.totalTokenCount||c.tok||0;addUse(tok,1);it.tok=tok;
   const cand=j.candidates&&j.candidates[0],txt=((cand&&cand.content&&cand.content.parts)||[]).filter(p=>!p.thought).map(p=>p.text||'').join('');
   if(!txt){it.st='err';it.msg='Gemini no devolvió datos'+(cand&&cand.finishReason?' ('+cand.finishReason+')':'');return}
   let out;try{out=mergeText(txt,it.url,it.canal||'')}catch(e){$('vjson').value=txt;it.st='err';it.msg='La respuesta no es un JSON válido (la he dejado en el modo manual para revisarla)';return}
-  it.st='ok';it.msg=out.length?out.map(h=>h.replace(/<br>.*$/,'').replace(/<[^>]+>/g,'')).join(' · '):'No se encontró ningún coche en el vídeo';it.res=out.join('');
+  it.st='ok';it.msg=out.length?out.map(h=>h.replace(/<br>.*$/,'').replace(/<[^>]+>/g,'')).join(' · '):'No se encontró ningún coche en el vídeo';if(it.model&&it.model!==model())it.msg+=` (con ${it.model})`;it.res=out.join('');
  }catch(e){
   if(e&&e.status===429){it.st='pend';it.tries=(it.tries||0)+1;
    const w=e.daily?3600000:Math.max(15,e.retry||60*it.tries)*1000;it.next=Date.now()+w;
@@ -512,7 +533,7 @@ function renderChart(){const k=$('cparam').value,L=filt();let rows;
  $('chart').innerHTML=rows.length?rows.map(r=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v">${fmt(r.v)}</span></div>`).join(''):'<p class="mu">Sin datos para este parámetro.</p>'}
 
 /* ---- ajustes ---- */
-function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();renderLims();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
+function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();renderLims();const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
  $('prices').innerHTML=Object.keys(Lb).map(k=>`<label>${Lb[k]}<input type="number" step="0.01" value="${S.pr[k]}" onchange="S.pr.${k}=+this.value;save();refresh()"></label>`).join('');
  $('trips').innerHTML='<tr><th>Viaje</th><th>km</th><th>% carretera</th></tr>'+S.trips.map((t,i)=>`<tr><td><input type="text" value="${esc(t.n)}" onchange="S.trips[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${t.km}" onchange="S.trips[${i}].km=+this.value;save();refresh()"></td><td><input type="number" value="${t.road}" onchange="S.trips[${i}].road=+this.value;save();refresh()"></td></tr>`).join('')}
 function exp(){$('io').value=JSON.stringify(S)}
