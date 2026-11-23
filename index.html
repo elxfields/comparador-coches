@@ -131,7 +131,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-23.7';
+const APP_VER='2026-11-23.8';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -565,9 +565,10 @@ async function importFichasFile(file){if(!file)return;let d;
  if(!d||d.tipo!=='comparador-coches/fichas'||!Array.isArray(d.fichas)){$('mlog').textContent='Ese archivo no es de fichas de Claude («fichas-claude.json»).';return}
  $('mlog').textContent='Importando fichas…';const res=[],noEnc=[];
  const mm=o=>[o.marca,o.modelo].map(x=>String(x||'').toLowerCase().trim()).join('|');
+ // Se busca por id solo si coinciden también marca y modelo; si no, por marca+modelo+versión.
+ const findCar=f=>{if(!f)return null;let c=byId(f.id);if(c&&mm(c)!==mm(f))c=null;return c||S.cars.find(x=>keyOf(x)===keyOf(f))||null};
  for(const f of d.fichas){
-  // Se busca por id solo si coinciden también marca y modelo; si no, por marca+modelo+versión.
-  let c=byId(f.id);if(c&&mm(c)!==mm(f))c=null;c=c||S.cars.find(x=>keyOf(x)===keyOf(f));if(!c){noEnc.push([f.marca,f.modelo,f.version].filter(Boolean).join(' '));continue}
+  const c=findCar(f);if(!c){noEnc.push([f.marca,f.modelo,f.version].filter(Boolean).join(' '));continue}
   const campos=f.campos||{},fu=f.fuentes||{};let n=0;c.fsrc=c.fsrc||{};
   Object.entries(campos).forEach(([k,v])=>{if(!NUM.some(x=>x[0]===k))return;v=num(v);if(v==null)return;
    // Rellena huecos; los precios y los datos 🧠 (sin verificar) se actualizan siempre con datos con fuente.
@@ -576,6 +577,17 @@ async function importFichasFile(file){if(!file)return;let d;
   let foto='';if(!carImg(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
   res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}`)}
+ // Duplicados: se fusiona el que sobra en el que se conserva (datos, equipamiento, foto, fuentes y notas) y se borra.
+ const pares=(Array.isArray(d.duplicados)?d.duplicados:[]).map(x=>({q:findCar(x.quitar),c:findCar(x.conservar)})).filter(p=>p.q&&p.c&&p.q!==p.c);
+ if(pares.length&&confirm(`Fusionar y quitar ${pares.length} coche${pares.length>1?'s':''} duplicado${pares.length>1?'s':''}:\n\n`+pares.map(p=>`• «${nm(p.q)}» → se integra en «${nm(p.c)}»`).join('\n')+'\n\n¿Seguir?')){
+  pares.forEach(({q,c})=>{c.fsrc=c.fsrc||{};
+   NUM.forEach(([k])=>{if(num(c[k])==null&&num(q[k])!=null){c[k]=q[k];if(q.fsrc&&q.fsrc[k])c.fsrc[k]=q.fsrc[k]}});
+   c.eq=c.eq||{};Object.entries(q.eq||{}).forEach(([k,v])=>{if(typeof c.eq[k]!=='boolean'&&typeof v==='boolean')c.eq[k]=v});
+   if(!carImg(c)&&carImg(q)){c.img=q.img;c.imgSrc=q.imgSrc}
+   c.src=[...(c.src||[]),...(q.src||[]).filter(s=>!(c.src||[]).some(x=>x.url===s.url))];
+   c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
+   S.cars=S.cars.filter(x=>x!==q);S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
+   res.push(`Duplicado fusionado: «${nm(q)}» → «${nm(c)}»`)})}
  save();renderAll();
  $('mlog').innerHTML=`<b>Fichas importadas</b> (${res.length})${syOn()?' · se sincronizan con tus otros dispositivos':''}<br>`+res.map(esc).join('<br>')+(noEnc.length?`<br>No encontrados en tu base: ${noEnc.map(esc).join(', ')}`:'')}
 
