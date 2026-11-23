@@ -128,7 +128,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-23.4';
+const APP_VER='2026-11-23.5';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -390,7 +390,7 @@ async function gapi(method,body,mdl){
  const j=await r.json().catch(()=>null);
  if(!r.ok){const er=(j&&j.error)||{},ri=(er.details||[]).find(d=>/RetryInfo/.test(d['@type']||''));
   const qf=(er.details||[]).filter(d=>/QuotaFailure/.test(d['@type']||'')).flatMap(d=>d.violations||[]).map(v=>v.quotaId||v.quotaMetric||'').join(' ');
-  throw{status:r.status,msg:String(er.message||('error HTTP '+r.status)).replace(/\.+$/,''),retry:ri?parseFloat(ri.retryDelay):null,daily:/per ?day|PerDay|daily/i.test(qf+' '+(er.message||''))}}
+  throw{status:r.status,msg:String(er.message||('error HTTP '+r.status)).replace(/\.+$/,''),quota:qf.trim(),model:mdl||model(),retry:ri?parseFloat(ri.retryDelay):null,daily:/per ?day|PerDay|daily/i.test(qf+' '+(er.message||''))}}
  return j}
 const optErr=e=>e.status===400&&/media_?resolution|video_?metadata|fps|thinking|Unknown name|Invalid JSON payload/i.test(e.msg);
 async function countTok(url){for(const opt of[true,false]){try{const m='models/'+model(),b=reqBody(url,opt);const j=await gapi('countTokens',{generateContentRequest:Object.assign({model:m},b)});return{tok:j.totalTokens,opt}}catch(e){if(opt&&optErr(e))continue;if(e.status===400||e.status===403||e.status===404)throw e;return{tok:null,opt}}}}
@@ -434,7 +434,7 @@ async function runQ(){clearTimeout(qTimer);if(qBusy)return;renderQ();
  }catch(e){
   if(e&&e.status===429){it.st='pend';it.tries=(it.tries||0)+1;
    const w=e.daily?3600000:Math.max(15,e.retry||60*it.tries)*1000;it.next=Date.now()+w;
-   it.msg=(e.daily?'Cuota diaria de Google agotada':'Límite por minuto de Google')+'; reintento en '+fmtT(w)+'.'}
+   it.msg=(e.daily?'Cuota diaria de Google agotada':'Límite por minuto de Google')+'; reintento en '+fmtT(w)+'. Google dice ('+(e.model||'')+'): '+(e.quota||'')+' '+String(e.msg||'').slice(0,220)}
   else if(e&&([500,502,503,504].includes(e.status)||e instanceof TypeError)&&(it.tries||0)<6){
    // Google saturado o sin conexión: es temporal, se reintenta esperando cada vez más (2, 5, 15, 30, 60, 120 min)
    const w=[2,5,15,30,60,120][it.tries||0]*60000;it.tries=(it.tries||0)+1;it.st='pend';it.next=Date.now()+w;
