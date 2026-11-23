@@ -167,9 +167,14 @@ const num=v=>(v===''||v==null||isNaN(+v))?null:+v;
 const fmt=v=>v==null?'–':(+(+v).toFixed(2)).toLocaleString('es-ES');
 const nm=c=>[c.marca,c.modelo,c.version].filter(Boolean).join(' ')||'(sin nombre)';
 const byId=id=>S.cars.find(c=>c.id===id);
-// Imagen del coche: la que pongas a mano o la miniatura del primer vídeo de YouTube del que salió.
-function carImg(c){if(c.img)return c.img;const s=(c.src||[]).find(s=>ytId(s.url));return s?`https://i.ytimg.com/vi/${ytId(s.url)}/mqdefault.jpg`:null}
-const imgTag=(c,w,h)=>{const u=carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:6px;display:block" onerror="this.style.display='none'">`:''};
+// Imagen del coche: foto oficial encontrada con «Completar ficha» o la que pegues a mano. Nunca miniaturas de YouTube.
+function carImg(c){return c.img&&!/ytimg\.com|youtube\.com/.test(c.img)?c.img:null}
+const imgTag=(c,w,h)=>{const u=carImg(c),box=`width:${w}px;height:${h}px;border-radius:6px;display:block`;
+ return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="${box};object-fit:contain;background:var(--bg)" onerror="this.outerHTML='<span style=&quot;${box};background:var(--bg)&quot;></span>'">`:
+ `<span title="Sin foto oficial todavía: pulsa «Completar ficha»" style="${box};background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:${Math.round(h*0.45)}px;opacity:.45">🚗</span>`};
+// Comprueba que una URL es una imagen que carga y tiene un tamaño razonable.
+function testImg(u){return new Promise(res=>{const im=new Image();let done=false;const fin=v=>{if(!done){done=true;res(v)}};
+ im.referrerPolicy='no-referrer';im.onload=()=>fin(im.naturalWidth>=300&&im.naturalHeight>=150);im.onerror=()=>fin(false);setTimeout(()=>fin(false),10000);im.src=u})}
 
 /* ---- costes ---- */
 function tripCost(c,tr){const r=tr.road/100,km=tr.km,fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
@@ -249,8 +254,8 @@ function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  const webMark=k=>c.fsrc&&c.fsrc[k]?(/^https?:/.test(c.fsrc[k])?` <a href="${esc(c.fsrc[k])}" target="_blank" rel="noopener" title="Dato sacado de internet: ${esc(c.fsrc[k])}">🌐</a>`:' <span title="Dato sacado de internet">🌐</span>'):'';
  const webSrc=[...new Set(Object.values(c.fsrc||{}).filter(u=>/^https?:/.test(u)))];
  $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
- <div style="margin-top:8px">${imgTag(c,240,135)}</div>${compHtml(c)}
- <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha con internet</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
+ <div style="margin-top:8px">${imgTag(c,240,135)}${carImg(c)&&c.imgSrc?`<div class="mu">Foto: ${esc(c.imgSrc)}</div>`:''}</div>${compHtml(c)}
+ <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha${carImg(c)?'':' y buscar foto oficial'}</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
  <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
  grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
  [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
@@ -436,7 +441,7 @@ function queueFicha(id,quiet){const c=byId(id);if(!c)return false;const key='fic
  Q.items=Q.items.filter(x=>x.yt!==key);Q.items.push({yt:key,kind:'ficha',car:id,url:'',canal:'',st:'pend',msg:'',added:Date.now()});
  if(!quiet){saveQ();renderQ();schedule(300);$('mlog').textContent=`Ficha de ${nm(c)} añadida a la cola`+(syOn()&&!SY.proc?'; la completará el PC.':'.');S.tab='base';renderTabs()}
  return true}
-function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100);if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
+function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100||!carImg(c));if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
  if(!confirm(`Se buscarán en internet los datos que faltan de ${L.length} coche${L.length>1?'s':''} (unos 5-20 k tokens cada uno). ¿Seguir?`))return;
  const n=L.filter(c=>queueFicha(c.id,true)).length;saveQ();renderQ();schedule(300);$('mlog').textContent=`${n} ficha${n>1?'s':''} añadida${n>1?'s':''} a la cola.`;window.scrollTo(0,0)}
 function fichaPrompt(c,miss,missEq){const lab=k=>{const n=NUM.find(x=>x[0]===k);return n?`${n[1]}${n[2]?' ('+n[2]+')':''}`:k};
@@ -450,6 +455,8 @@ Fuentes preferidas, en este orden según el dato:
 ${ev?'- ev-database.org: consumos y autonomías reales (combinado, autopista con clima templado y con frío), batería útil, carga 10-80 % y potencia media de carga.\n':''}- spritmonitor.de: consumo real medio de usuarios.
 - euroncap.com: estrellas Euro NCAP.
 
+${carImg(c)?'':`Imágenes ("imagenes"): hasta 5 URLs DIRECTAS a archivos de imagen (.jpg, .png o .webp) de este modelo, exterior, vista de 3/4 delantera si es posible. Solo imágenes oficiales: web del fabricante o su sala de prensa / media (p. ej. media.<marca>.com, <marca>-press, newsroom). Nada de YouTube, foros, concesionarios ni bancos de imágenes. Copia las URLs exactas que aparezcan en esas páginas; no las construyas.
+`}
 Rellena SOLO estos campos (los demás ya los tengo):
 ${miss.map(k=>`"${k}": ${lab(k)}`).join('\n')}
 ${missEq.length?`Equipamiento ("eq"), true o false solo si la fuente lo indica para esta versión en España: ${missEq.map(k=>`"${k}" (${(EQ.find(e=>e[0]===k)||[])[1]})`).join(', ')}`:''}
@@ -462,11 +469,11 @@ Reglas:
 - "fuentes": para cada campo rellenado, la URL de la página de donde sale.
 
 Formato:
-{"campos": {"campo": valor}, "eq": {"clave": true}, "fuentes": {"campo": "https://..."}, "notas": ["máx. 5 notas breves"]}`}
+{"campos": {"campo": valor}, "eq": {"clave": true}, "fuentes": {"campo": "https://..."}, "imagenes": ["https://.../foto.jpg"], "notas": ["máx. 5 notas breves"]}`}
 async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese coche ya no existe';return}
  if(u.tok+20000>LIM.dayTok&&!it.force){it.st='pend';it.next=Date.now()+msToMidnight();it.msg='Esperando a mañana: no cabe en el presupuesto de hoy.';return}
  const miss=NUM.filter(n=>num(c[n[0]])==null).map(n=>n[0]),missEq=EQ.filter(e=>!c.eq||typeof c.eq[e[0]]!=='boolean').map(e=>e[0]);
- if(!miss.length&&!missEq.length){it.st='ok';it.msg='La ficha ya estaba completa';return}
+ if(!miss.length&&!missEq.length&&carImg(c)){it.st='ok';it.msg='La ficha ya estaba completa';return}
  it.msg='Gemini está buscando en internet…';it.t0=Date.now();renderQ();Q.last=Date.now();saveQ();
  qTick=setInterval(()=>{const el=document.getElementById('qrun');if(el)el.textContent=fmtT(Date.now()-it.t0)},1000);
  const body={contents:[{role:'user',parts:[{text:fichaPrompt(c,miss,missEq)}]}],tools:[{google_search:{}}],generationConfig:{temperature:0.1}};
@@ -485,7 +492,10 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
  const gm=(cand&&cand.groundingMetadata)||{},web=(gm.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({url:w.uri,title:w.title||''}));
  c.web=[...(c.web||[]),...web].filter((w,i,a)=>a.findIndex(x=>x.title===w.title)===i).slice(0,15);
  c.notas=c.notas||[];(Array.isArray(o.notas)?o.notas:[]).slice(0,5).forEach(n=>{if(typeof n==='string'&&n){const t='[web] '+n;if(!c.notas.includes(t))c.notas.push(t)}});
- it.st='ok';it.msg=`${nm(c)}: ${got.length} dato${got.length===1?'':'s'} y ${eqn} equipamiento${eqn===1?'':'s'} nuevos`+(it.model&&it.model!==model()?` (con ${it.model})`:'');
+ let foto='';if(!carImg(c)){const cand2=(Array.isArray(o.imagenes)?o.imagenes:[]).filter(u=>typeof u==='string'&&/^https:\/\//.test(u)&&!/ytimg|youtube|youtu\.be/.test(u)).slice(0,5);
+  if(cand2.length){it.msg='Comprobando fotos oficiales…';renderQ();for(const u of cand2){if(await testImg(u)){c.img=u;c.imgSrc=u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=' · foto oficial ('+c.imgSrc+')';break}}}
+  if(!foto)foto=' · sin foto oficial válida'}
+ it.st='ok';it.msg=`${nm(c)}: ${got.length} dato${got.length===1?'':'s'} y ${eqn} equipamiento${eqn===1?'':'s'} nuevos${foto}`+(it.model&&it.model!==model()?` (con ${it.model})`:'');
  save();renderAll()}
 
 const QST={pend:['⏳','Pendiente'],proc:['⚙️','Procesando'],ok:['✅','Hecho'],err:['❌','Error'],skip:['⏭️','Saltado']};
