@@ -131,7 +131,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-23.8';
+const APP_VER='2026-11-24.1';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -197,6 +197,21 @@ function val(c,k){if(k==='coste100'){const tr=S.trips[1]||S.trips[0];if(!tr)retu
  Eléctricos: sale con soc0 %, llega a cada parada con socMin %, carga hasta socMax % (en la última, solo lo necesario).
  Consumo favorable = autopista con clima templado; desfavorable = autopista con frío × viento en contra.
  Si falta el dato real se estima (≈) a partir del consumo real mixto o del WLTP. */
+// Curva de carga: [[%batería, kW], …]. Potencia interpolada y minutos para cargar de a% a b% (paso de 1 %).
+const hasCurve=c=>Array.isArray(c.curva)&&c.curva.length>=3&&!!num(c.bat);
+function curveP(cu,s){for(let i=1;i<cu.length;i++){if(s<=cu[i][0]){const[a,pa]=cu[i-1],[b,pb]=cu[i];return pa+(pb-pa)*(s-a)/((b-a)||1)}}return cu[cu.length-1][1]}
+function curveMin(c,a,b){const cu=c.curva,E=+c.bat;let t=0;for(let s=a;s<b-1e-9;s+=1){const st=Math.min(1,b-s);t+=E*st/100/Math.max(1,curveP(cu,s+st/2))*60}return t}
+// Gráfica SVG de curvas de carga superpuestas. list: [{n, cu}]
+const CCOL=['#1d6fd6','#e8913a','#1a8a4a','#c0392b','#8e44ad','#16a085','#d35400','#7f8c8d'];
+function curveSvg(list,w=560,h=230){if(!list.length)return'';
+ const maxP=Math.max(50,...list.flatMap(x=>x.cu.map(p=>p[1]))),stepY=maxP>300?100:50,top=Math.ceil(maxP/stepY)*stepY;
+ const X=s=>42+s/100*(w-52),Y=p=>h-24-p/top*(h-38);let g='';
+ for(let p=0;p<=top;p+=stepY)g+=`<line x1="42" x2="${w-10}" y1="${Y(p)}" y2="${Y(p)}" stroke="var(--bd)"/><text x="36" y="${Y(p)+4}" text-anchor="end" font-size="11" fill="var(--mu)">${p}</text>`;
+ for(let s=0;s<=100;s+=20)g+=`<text x="${X(s)}" y="${h-8}" text-anchor="middle" font-size="11" fill="var(--mu)">${s}%</text>`;
+ g+=`<text x="10" y="12" font-size="11" fill="var(--mu)">kW</text>`;
+ list.forEach((x,i)=>{g+=`<polyline fill="none" stroke="${CCOL[i%CCOL.length]}" stroke-width="2.2" points="${x.cu.map(p=>X(p[0]).toFixed(1)+','+Y(p[1]).toFixed(1)).join(' ')}"><title>${esc(x.n)}</title></polyline>`});
+ return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;max-width:${w}px;display:block" role="img" aria-label="Curvas de carga">${g}</svg>`+
+  (list.length>1?`<div class="mu">${list.map((x,i)=>`<span style="white-space:nowrap;margin-right:10px"><span style="color:${CCOL[i%CCOL.length]}">■</span> ${esc(x.n)}</span>`).join(' ')}</div>`:'')}
 function routeSim(c,r,cond){const P=S.rp,km=+r.km,driveMin=(+r.h||0)*60,desf=cond==='desf';if(!km)return null;
  if(c.t==='BEV'){
   let est=false,base=num(c.kwh100AutT);
@@ -204,12 +219,14 @@ function routeSim(c,r,cond){const P=S.rp,km=+r.km,driveMin=(+r.h||0)*60,desf=con
   if(base==null||!num(c.bat))return null;
   let cons=base;if(desf){if(num(c.kwh100AutF)!=null)cons=c.kwh100AutF;else{cons=base*P.fFrio;est=true}cons*=P.viento}
   const E=+c.bat,C=cons/100,s0=P.soc0,sMin=P.socMin,sMax=Math.max(P.socMax,sMin+5),win=sMax-sMin;
-  const r0=Math.max(0,s0-sMin)/100*E/C;let stops=0,chSoc=0;
-  if(km>r0){const leg=win/100*E/C,rem=km-r0;stops=Math.ceil(rem/leg);chSoc=(stops-1)*win+Math.min(win,(rem-(stops-1)*leg)*C/E*100)}
-  let t70=num(c.c1080),estC=false;
-  if(t70==null){estC=true;const p=num(c.dcMedia)??(num(c.dc)?c.dc*0.55:null);t70=p?0.7*E/p*60:null}
-  if(stops&&t70==null)return null;
-  const chargeMin=stops?chSoc/70*t70*(desf?P.cargaFrio:1)+stops*P.over:0;
+  const r0=Math.max(0,s0-sMin)/100*E/C;let stops=0,chSoc=0,lastSoc=0;
+  if(km>r0){const leg=win/100*E/C,rem=km-r0;stops=Math.ceil(rem/leg);lastSoc=Math.min(win,(rem-(stops-1)*leg)*C/E*100);chSoc=(stops-1)*win+lastSoc}
+  let chargeMin=0,estC=false;
+  if(stops){
+   if(hasCurve(c))chargeMin=(stops-1)*curveMin(c,sMin,sMax)+curveMin(c,sMin,sMin+lastSoc); // curva real de carga (evkx)
+   else{let t70=num(c.c1080);if(t70==null){estC=true;const p=num(c.dcMedia)??(num(c.dc)?c.dc*0.55:null);t70=p?0.7*E/p*60:null}
+    if(t70==null)return null;chargeMin=chSoc/70*t70}
+   chargeMin=chargeMin*(desf?P.cargaFrio:1)+stops*P.over}
   const kWhPub=chSoc/100*E*1.08,kWhHome=(stops?Math.max(0,s0-sMin)/100*E:km*C)*1.1;
   return{stops,chargeMin,driveMin,totalMin:driveMin+chargeMin,cost:kWhPub*S.pr.pub+kWhHome*S.pr.casa,cons,est:est||(stops>0&&estC)}}
  const fp=c.t==='Diésel'?S.pr.die:S.pr.gas;
@@ -265,6 +282,7 @@ function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
  grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
  [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
+ (hasCurve(c)?`<h3>Curva de carga rápida</h3>${curveSvg([{n:nm(c),cu:c.curva}],520,210)}<div class="mu">Del 10 al 80 %: <b>${fmtMin(curveMin(c,10,80))}</b>${c.optCarga?` · Ventana óptima en viaje: <b>${c.optCarga[0]}–${c.optCarga[1]} %</b> (cargar más allá compensa menos)`:''}${c.bateria?' · Batería: '+esc(c.bateria):''}${c.curvaSrc?` · Fuente: <a href="${esc(c.curvaSrc)}" target="_blank" rel="noopener">evkx.net</a>`:''}</div>`:'')+
  `<h3>Fuentes</h3>${(c.src||[]).map(s=>`<div class="mu"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.canal||s.url)}</a> ${esc(s.fecha||'')}</div>`).join('')||'<div class="mu">Sin fuentes</div>'}
  ${webSrc.length||(c.web||[]).length?`<h3>Fuentes web (🌐)</h3>${webSrc.map(u=>`<div class="mu"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,'').slice(0,80))}</a></div>`).join('')}${(c.web||[]).length?`<div class="mu">Consultadas: ${c.web.map(w=>`<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.title||'web')}</a>`).join(' · ')}</div>`:''}`:''}
  ${(c.notas||[]).length?`<h3>Notas</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}
@@ -574,9 +592,13 @@ async function importFichasFile(file){if(!file)return;let d;
    // Rellena huecos; los precios y los datos 🧠 (sin verificar) se actualizan siempre con datos con fuente.
    if(num(c[k])==null||k==='precio'||k==='precioMin'||c.fsrc[k]==='modelo'){c[k]=v;c.fsrc[k]=typeof fu[k]==='string'&&/^https?:\/\//.test(fu[k])?fu[k]:'web';n++}});
   let e=0;c.eq=c.eq||{};Object.entries(f.eq||{}).forEach(([k,v])=>{if(EQ.some(x=>x[0]===k)&&typeof v==='boolean'&&typeof c.eq[k]!=='boolean'){c.eq[k]=v;e++}});
+  // Curva de carga (evkx): se guarda siempre que venga bien formada; ventana óptima y batería, como texto.
+  let extra='';if(Array.isArray(f.curva)&&f.curva.length>=3&&f.curva.every(p=>Array.isArray(p)&&num(p[0])!=null&&num(p[1])!=null)){c.curva=f.curva.map(p=>[+p[0],+p[1]]).sort((a,b)=>a[0]-b[0]);c.curvaSrc=typeof f.curvaSrc==='string'&&/^https?:\/\//.test(f.curvaSrc)?f.curvaSrc:'';extra=', curva de carga'}
+  if(Array.isArray(f.optCarga)&&f.optCarga.length===2&&f.optCarga.every(v=>num(v)!=null))c.optCarga=f.optCarga.map(Number);
+  if(typeof f.bateria==='string'&&f.bateria)c.bateria=f.bateria.slice(0,40);
   let foto='';if(!carImg(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
-  res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}`)}
+  res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}${extra}`)}
  // Duplicados: se fusiona el que sobra en el que se conserva (datos, equipamiento, foto, fuentes y notas) y se borra.
  const pares=(Array.isArray(d.duplicados)?d.duplicados:[]).map(x=>({q:findCar(x.quitar),c:findCar(x.conservar)})).filter(p=>p.q&&p.c&&p.q!==p.c);
  if(pares.length&&confirm(`Fusionar y quitar ${pares.length} coche${pares.length>1?'s':''} duplicado${pares.length>1?'s':''}:\n\n`+pares.map(p=>`• «${nm(p.q)}» → se integra en «${nm(p.c)}»`).join('\n')+'\n\n¿Seguir?')){
@@ -584,6 +606,7 @@ async function importFichasFile(file){if(!file)return;let d;
    NUM.forEach(([k])=>{if(num(c[k])==null&&num(q[k])!=null){c[k]=q[k];if(q.fsrc&&q.fsrc[k])c.fsrc[k]=q.fsrc[k]}});
    c.eq=c.eq||{};Object.entries(q.eq||{}).forEach(([k,v])=>{if(typeof c.eq[k]!=='boolean'&&typeof v==='boolean')c.eq[k]=v});
    if(!carImg(c)&&carImg(q)){c.img=q.img;c.imgSrc=q.imgSrc}
+   if(!hasCurve(c)&&Array.isArray(q.curva)){c.curva=q.curva;c.curvaSrc=q.curvaSrc}if(!c.optCarga&&q.optCarga)c.optCarga=q.optCarga;if(!c.bateria&&q.bateria)c.bateria=q.bateria;
    c.src=[...(c.src||[]),...(q.src||[]).filter(s=>!(c.src||[]).some(x=>x.url===s.url))];
    c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
    S.cars=S.cars.filter(x=>x!==q);S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
@@ -725,6 +748,11 @@ function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean)
  h+=row('Datos completos (%)',cars.map(c=>completeness(c)),'high',v=>v+' %');
  h+=`<tr><td class="mu">Por apartado</td>${cars.map(c=>`<td class="mu" style="white-space:normal;min-width:120px">${compGroups(c).filter(([,hh,t])=>hh<t).map(([g,hh,t])=>`${esc(g)} ${hh}/${t}`).join('<br>')||'Todo completo'}</td>`).join('')}</tr>`;
  ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
+ if(cars.some(hasCurve)){const cc=cars.filter(hasCurve);
+  h+=`<tr><th colspan="${cars.length+1}">Curva de carga (evkx.net)</th></tr>`+row('Carga 10→80 % según la curva',cars.map(c=>hasCurve(c)?curveMin(c,10,80):null),'low',fmtMin)+
+   `<tr><td>Ventana óptima en viaje</td>${cars.map(c=>`<td>${c.optCarga?c.optCarga[0]+'–'+c.optCarga[1]+' %':'–'}</td>`).join('')}</tr>`+
+   `<tr><td>Batería</td>${cars.map(c=>`<td>${esc(c.bateria||'–')}</td>`).join('')}</tr>`+
+   `<tr><td colspan="${cars.length+1}" style="white-space:normal">${curveSvg(cc.map(c=>({n:nm(c),cu:c.curva})))}</td></tr>`}
  h+=`<tr><th colspan="${cars.length+1}">Coste por viaje tipo</th></tr>`+S.trips.map(t=>row(`${esc(t.n)} (${t.km} km) €`,cars.map(c=>tripCost(c,t)),'low')).join('');
  let rh='';S.routes.forEach(r=>CONDS.forEach(([cd,lab])=>{const sims=cars.map(c=>routeSim(c,r,cd));if(sims.every(s=>!s))return;
   rh+=`<tr><th colspan="${cars.length+1}">${esc(r.n)} (${r.km} km) · ${lab}</th></tr>`+RMET.map(([k,l,f])=>{const vals=sims.map(s=>s?s[k]:null),b=bestIdx(vals,'low');
@@ -757,7 +785,7 @@ const CG=[
  ['viajes','Viajes y rutas',()=>[...routeSpecs(),...tripSpecs()]],
  ['prest','Prestaciones',()=>['cv','par','acel','vmax'].map(nSpec)],
  ['consumo','Consumos y autonomía',()=>['kwh100Real','kwh100AutT','kwh100AutF','kwh100','l100Real','l100','rangoReal','rango','rangoE','bat'].map(nSpec)],
- ['carga','Carga',()=>['dcMedia','dc','ac','c1080'].map(nSpec)],
+ ['carga','Carga',()=>[{t:'Curvas de carga rápida (kW según % de batería)',curves:true},{t:'Carga 10→80 % según la curva',dir:'low',fmt:fmtMin,get:c=>hasCurve(c)?curveMin(c,10,80):null},...['dcMedia','dc','ac','c1080'].map(nSpec)]],
  ['dim','Dimensiones y espacio',()=>['mal','malMax','piernasTras','plazas','largo','ancho','alto','batalla','altSuelo','peso'].map(nSpec)],
  ['seg','Garantía y seguridad',()=>['gar','garBat','ncap'].map(nSpec)],
  ['opinion','Opinión de los probadores',()=>['qInt','confort','insonor','dinam','infotain'].map(nSpec)],
@@ -767,7 +795,9 @@ const CG=[
 function chartCars(){return S.cmode==='comp'?S.sel.map(byId).filter(Boolean):filt()}
 function renderChartSel(){const g=$('cgrp');if(!g)return;g.innerHTML=CG.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');g.value=CG.some(x=>x[0]===S.cgrp)?S.cgrp:'costes';$('cmode').value=S.cmode==='comp'?'comp':'all'}
 const fmtMinS=m=>{const t=Math.round(m),h=Math.floor(t/60),mm=t%60;return h?`${h}h${String(mm).padStart(2,'0')}`:`${mm} min`};
-function chartCard(sp,cars){const f=sp.fmt===fmtMin?fmtMinS:(sp.fmt||fmt);
+function chartCard(sp,cars){
+ if(sp.curves){const cc=cars.filter(hasCurve).slice(0,8);if(!cc.length)return'';
+  return `<div class="cc" style="grid-column:1/-1"><h4>${esc(sp.t)}</h4>${curveSvg(cc.map(c=>({n:nm(c),cu:c.curva})))}${cars.filter(hasCurve).length>8?'<p class="mu">Se muestran 8 coches como máximo: usa «Solo los de Comparar» para elegir cuáles.</p>':''}</div>`}const f=sp.fmt===fmtMin?fmtMinS:(sp.fmt||fmt);
  if(sp.pair){let rows=cars.map(c=>{const [a,b,e]=sp.pair(c);return{n:nm(c),a,b,e}}).filter(r=>r.a!=null||r.b!=null);if(!rows.length)return'';
   rows.sort((x,y)=>(x.a??x.b)-(y.a??y.b));const m=Math.max(...rows.flatMap(r=>[r.a||0,r.b||0]))||1;
   return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${esc(r.n)}</span><span class="t" style="display:flex;flex-direction:column;gap:2px;background:none;height:auto"><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--ac);width:${Math.max(0,100*(r.a||0)/m)}%"></span></span><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:#e8913a;width:${Math.max(0,100*(r.b||0)/m)}%"></span></span></span><span class="v ${i===0?'best':''}" style="line-height:1.15">${r.e?'≈ ':''}${r.a==null?'–':f(r.a)}<br>${r.e?'≈ ':''}${r.b==null?'–':f(r.b)}</span></div>`).join('')+'</div>'}

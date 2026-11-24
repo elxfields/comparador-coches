@@ -31,6 +31,9 @@ mediante Gemini. Los datos se sincronizan entre dispositivos a través de un scr
 - **Rutas largas** (Comparar y Gráficos; parámetros en Ajustes → Rutas largas): Getafe → Pontevedra y
   Getafe → Albacete por defecto, en condiciones favorables y desfavorables (frío y viento):
   paradas, tiempo cargando, tiempo total y coste. ≈ indica valores estimados por falta de datos reales.
+- **Curvas de carga** (evkx.net): potencia de carga rápida según el % de batería. Se ven en la ficha,
+  en Comparar y en Gráficos → Carga, y las rutas calculan el tiempo de carga recorriendo la curva real.
+  También la ventana de carga óptima en viaje y la química/tensión de la batería.
 - **Gráficos** agrupados por tema (costes, viajes, prestaciones, consumos, carga, dimensiones,
   seguridad, opinión, equipamiento, puntuación), con todos los coches o solo los de Comparar.
 - **Sincronización** (Ajustes → Sincronización con Google): coches, precios, viajes, rutas, pesos y
