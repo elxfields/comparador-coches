@@ -130,7 +130,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-24.6';
+const APP_VER='2026-11-24.7';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -618,7 +618,7 @@ async function importFichasFile(file){if(!file)return;let d;
    if(!hasCurve(c)&&Array.isArray(q.curva)){c.curva=q.curva;c.curvaSrc=q.curvaSrc}if(!c.optCarga&&q.optCarga)c.optCarga=q.optCarga;if(!c.bateria&&q.bateria)c.bateria=q.bateria;
    c.src=[...(c.src||[]),...(q.src||[]).filter(s=>!(c.src||[]).some(x=>x.url===s.url))];
    c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
-   S.cars=S.cars.filter(x=>x!==q);S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
+   S.cars=S.cars.filter(x=>x!==q);/* borrado permanente: otro dispositivo que aún tenga la copia no puede resucitarla */S.del[String(q.id)]=9e15;snapC.delete(String(q.id));S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
    res.push(`Duplicado fusionado: «${nm(q)}» → «${nm(c)}»`)})}
  save();renderAll();
  $('mlog').innerHTML=`<b>Fichas importadas</b> (${res.length})${syOn()?' · se sincronizan con tus otros dispositivos':''}<br>`+res.map(esc).join('<br>')+(noEnc.length?`<br>No encontrados en tu base: ${noEnc.map(esc).join(', ')}`:'')}
