@@ -28,7 +28,7 @@ button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#f
 .g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:2px}.g input,.g select{width:100%}
 .eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
 .eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
-.bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:5px;min-width:0}.bar .l .ln{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:5px;min-width:0}.bar .l .ln{overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:12px;overflow-wrap:anywhere}
 .bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
 .mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:120px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:20px;padding:3px 4px;font-size:12px;max-width:100%}.chip .cn{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip button{border:none;background:none;padding:0 4px}.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:4px}.bcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac)}.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none}.logo.sm{width:34px;height:34px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:600}.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 10px}.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 8px;border-radius:12px;border-width:2px;overflow:hidden;gap:2px}.mcard.on{border-color:var(--ac)}.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}.mcard .tick{position:absolute;top:6px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}.mcard .mn,.mcard .mu{padding:0 8px}.mn{font-weight:600;margin-top:4px}@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11px}}.cmpwrap{max-height:82vh;overflow:auto;border-radius:8px}#cmp tr:first-child th{position:sticky;top:0;z-index:3;background:var(--card);box-shadow:0 1px 0 var(--bd)}#cmp tr>:first-child:not([colspan]){position:sticky;left:0;z-index:2;background:var(--card);white-space:normal;min-width:130px}#cmp tr:first-child>:first-child{z-index:4}@media (max-width:520px){#cmp th img{width:120px!important;height:68px!important}#cmp tr:first-child th{min-width:124px!important}#cmp tr>:first-child:not([colspan]){min-width:96px;max-width:112px;font-size:12px}}.pg{display:none}.pg.on{display:block}
 textarea{width:100%;height:110px;font:12px monospace}
@@ -89,7 +89,7 @@ a{color:var(--ac)}
 </div>
 
 <div class="pg" id="pg-chart">
-<div class="g"><label>Grupo de datos<select id="cgrp" onchange="S.cgrp=this.value;save();renderChart()"></select></label><label>Coches<select id="cmode" onchange="S.cmode=this.value;save();renderChart()"><option value="all">Todos (con los filtros)</option><option value="comp">Solo los de Comparar</option></select></label></div>
+<div class="g"><label>Grupo de datos<select id="cgrp" onchange="S.cgrp=this.value;save();renderChart()"></select></label><label>Coches<select id="cmode" onchange="S.cmode=this.value;save();renderChart()"><option value="all">Todos (con los filtros)</option><option value="comp">Solo los de Comparar</option></select></label><label class="row" style="align-self:end"><input type="checkbox" id="cmech" onchange="S.cmech=this.checked?1:0;save();renderChart()"> Agrupar acabados con la misma mecánica (motor y tracción)</label></div>
 <p class="mu" id="cleg"></p>
 <div id="chart" class="cgrid"></div></div>
 
@@ -130,7 +130,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-24.7';
+const APP_VER='2026-11-24.8';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -199,6 +199,36 @@ function tripCost(c,tr){const r=tr.road/100,km=tr.km,fp=c.t==='Diésel'?S.pr.die
  if(c.t==='PHEV'){const ek=Math.min(km,c.rangoE||0),e=el(ek),f=fu(km-ek);return(e==null||f==null)?null:e+f}
  if(c.t==='HEV'||c.t==='Gasolina'||c.t==='Diésel')return fu(km);
  return null}
+/* ---- mecánica: versiones del mismo modelo con el mismo motor y tracción (el acabado no cuenta) ---- */
+// Datos que dependen solo de la mecánica: se comparten entre acabados y se agrupan en las gráficas de motor.
+const ENG=['cv','par','acel','vmax','kwh100','l100','bat','rango','rangoE','dc','ac','c1080','dcMedia','kwh100Real','kwh100AutT','kwh100AutF','rangoReal','l100Real'];
+const ENGX=['curva','curvaSrc','optCarga','bateria'];
+const TRL={FWD:'delantera',RWD:'trasera',AWD:'total'};
+// Tracción: la guardada; si no, se deduce del nombre de la versión o del equipamiento.
+function tracOf(c){if(TRL[c.trac])return c.trac;const v=' '+(c.version||'')+' '+(c.motor||'')+' ';
+ if(/\b(AWD|4WD|4x4|4MATIC|xDrive|quattro|4Motion|AWD-i|Dual Motor|e-?4ORCE|ALLGRIP|ALL GRIP|\d{2}x)\b|tracci[oó]n total/i.test(v))return'AWD';
+ if(/\b(RWD)\b|tracci[oó]n trasera|propulsi[oó]n/i.test(v))return'RWD';
+ if(/\b(FWD)\b|tracci[oó]n delantera/i.test(v))return'FWD';
+ if(c.eq&&c.eq.tracc4===true)return'AWD';return null}
+const lc=s=>String(s||'').toLowerCase().trim();
+// Clave de mecánica: marca + modelo + tipo + tracción + motor (o la potencia si no hay nombre de motor).
+function mechKey(c){const tr=tracOf(c),m=c.motor?lc(c.motor):(num(c.cv)!=null?'cv'+Math.round(c.cv/5)*5:null);
+ return tr&&m?[lc(c.marca),lc(c.modelo),c.t||'',tr,m].join('|'):'id:'+c.id}
+function mechLabel(c){const tr=tracOf(c);return [c.motor||(num(c.cv)!=null?c.cv+' CV':''),c.t,tr?'tracción '+TRL[tr]:''].filter(Boolean).join(' · ')||'–'}
+const isBrain=(c,k)=>c.fsrc&&c.fsrc[k]==='modelo';
+// Rellena en una copia los datos de mecánica que le falten con los de otros acabados de la misma mecánica.
+function fillMech(base,mem){const v=Object.assign({},base);v.fsrc=Object.assign({},base.fsrc||{});
+ ENG.forEach(k=>{if(num(v[k])!=null&&!isBrain(v,k))return;const o=mem.find(x=>x!==base&&num(x[k])!=null&&!isBrain(x,k))||(num(v[k])==null&&mem.find(x=>num(x[k])!=null));if(o){v[k]=o[k];if(o.fsrc&&o.fsrc[k])v.fsrc[k]=o.fsrc[k]}});
+ if(!hasCurve(v)){const o=mem.find(hasCurve);if(o){v.curva=o.curva;v.curvaSrc=o.curvaSrc}}
+ ['optCarga','bateria'].forEach(k=>{if(!v[k]){const o=mem.find(x=>x[k]);if(o)v[k]=o[k]}});
+ return v}
+const mechMembers=c=>{const k=mechKey(c);return k.startsWith('id:')?[c]:S.cars.filter(x=>mechKey(x)===k)};
+const withMech=c=>{const m=mechMembers(c);return m.length>1?fillMech(c,m):c};
+// Una entrada por mecánica (para las gráficas de motor): nombre sin acabado y datos combinados.
+function mechCars(cars){const g=new Map();cars.forEach(c=>{const k=mechKey(c);if(!g.has(k))g.set(k,[]);g.get(k).push(c)});
+ return [...g.values()].map(list=>{const all=mechMembers(list[0]),base=list.find(officialImg)||list[0],tr=tracOf(base);
+  const v=all.length>1?fillMech(base,all):Object.assign({},base);if(!tr||!(base.motor||num(v.cv)!=null))return v;
+  v.version=[base.motor||(num(v.cv)!=null?v.cv+' CV':''),'tracción '+TRL[tr]].filter(Boolean).join(' · ')+(list.length>1?` (${list.length} acabados)`:'');v._trims=list.map(x=>x.version||'(sin versión)');return v})}
 function val(c,k){if(k==='coste100'){const tr=S.trips[1]||S.trips[0];if(!tr)return null;const v=tripCost(c,tr);return v==null?null:v/tr.km*100}return num(c[k])}
 
 /* ---- rutas largas (al estilo ABRP) ----
@@ -288,7 +318,7 @@ function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
  <div style="margin-top:8px">${imgTag(c,240,135)}${officialImg(c)&&c.imgSrc?`<div class="mu">Foto: ${esc(c.imgSrc)}</div>`:(ytThumb(c)?'<div class="mu">Foto: miniatura del vídeo de YouTube (no hay foto oficial)</div>':'')}</div>${compHtml(c)}
  <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha${officialImg(c)?'':' y buscar foto oficial'}</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
- <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
+ <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Motor (sin acabado, p. ej. «Gran Autonomía», «2.5 MHEV 141 CV»)<input type="text" value="${esc(c.motor)}" onchange="setF(${c.id},'motor',this.value.trim())"></label><label>Tracción<select onchange="setF(${c.id},'trac',this.value)"><option value="">${tracOf(c)&&!c.trac?'Deducida: '+TRL[tracOf(c)]:'?'}</option>${Object.entries(TRL).map(([k,l])=>`<option value="${k}" ${c.trac===k?'selected':''}>${l[0].toUpperCase()+l.slice(1)} (${k})</option>`).join('')}</select></label></div>${(()=>{const m=mechMembers(c);return m.length>1?`<p class="mu">Misma mecánica (${esc(mechLabel(c))}) que: ${m.filter(x=>x!==c).map(x=>`<a href="#" onclick="openEdit(${x.id});return false">${esc(nm(x))}</a>`).join(' · ')}. Los datos de motor, consumo y carga que falten aquí se toman de ellos.</p>`:''})()}`+
  grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
  [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
  (hasCurve(c)?`<h3>Curva de carga rápida</h3>${curveSvg([{n:nm(c),cu:c.curva}],520,210)}<div class="mu">${hasCurveT(c)?`Del 10 al 80 %: <b>${fmtMin(curveMin(c,10,80))}</b>`:'Falta la batería útil para calcular tiempos'}${c.optCarga?` · Ventana óptima en viaje: <b>${c.optCarga[0]}–${c.optCarga[1]} %</b> (cargar más allá compensa menos)`:''}${c.bateria?' · Batería: '+esc(c.bateria):''}${c.curvaSrc?` · Fuente: <a href="${esc(c.curvaSrc)}" target="_blank" rel="noopener">evkx.net</a>`:''}</div>`:'')+
@@ -580,7 +610,7 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
 function exportForClaude(){if(!S.cars.length){$('mlog').textContent='No hay coches que exportar.';return}
  const coches=S.cars.map(c=>({id:c.id,marca:c.marca||'',modelo:c.modelo||'',version:c.version||'',t:c.t||'',anio:c.anio??null,carroc:c.carroc||'',
   faltan:NUM.map(n=>n[0]).filter(k=>num(c[k])==null||k==='precio'||k==='precioMin'||(c.fsrc&&c.fsrc[k]==='modelo')),
-  faltanEq:EQ.map(e=>e[0]).filter(k=>!c.eq||typeof c.eq[k]!=='boolean'),sinFoto:needsPhoto(c),
+  faltanEq:EQ.map(e=>e[0]).filter(k=>!c.eq||typeof c.eq[k]!=='boolean'),sinFoto:needsPhoto(c),motor:c.motor||'',trac:tracOf(c)||'',
   tiene:Object.fromEntries(NUM.map(n=>[n[0],num(c[n[0]])]).filter(([k,v])=>v!=null))}));
  const out={tipo:'comparador-coches/peticion-fichas',fecha:new Date().toISOString(),
   campos:Object.fromEntries(NUM.map(n=>[n[0],n[1]+(n[2]?' ('+n[2]+')':'')])),equipamiento:Object.fromEntries(EQ.map(e=>[e[0],e[1]])),coches};
@@ -605,6 +635,7 @@ async function importFichasFile(file){if(!file)return;let d;
   let extra='';if(Array.isArray(f.curva)&&f.curva.length>=3&&f.curva.every(p=>Array.isArray(p)&&num(p[0])!=null&&num(p[1])!=null)){c.curva=f.curva.map(p=>[+p[0],+p[1]]).sort((a,b)=>a[0]-b[0]);c.curvaSrc=typeof f.curvaSrc==='string'&&/^https?:\/\//.test(f.curvaSrc)?f.curvaSrc:'';extra=', curva de carga'}
   if(Array.isArray(f.optCarga)&&f.optCarga.length===2&&f.optCarga.every(v=>num(v)!=null))c.optCarga=f.optCarga.map(Number);
   if(typeof f.bateria==='string'&&f.bateria)c.bateria=f.bateria.slice(0,40);
+  if(TRL[f.trac])c.trac=f.trac;if(typeof f.motor==='string'&&f.motor.trim())c.motor=f.motor.trim().slice(0,60);
   let foto='';if(needsPhoto(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
   res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}${extra}`)}
@@ -835,11 +866,12 @@ function renderCmpCharts(cars){const box=$('cmpcharts');if(!box)return;if(cars.l
    ...S.routes.map(rr=>({t:`Coste ${rr.n} (€, favorable)`,get:c=>{const s=routeSim(c,rr,'fav');return s?Math.round(s.cost*100)/100:null},dir:'low'}))])}</div>`;
  box.innerHTML=html+'</details>'}
 
-function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean);renderCmpCharts(cars);
+function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean).map(withMech);renderCmpCharts(cars);
  if(cars.length<2){$('cmp').innerHTML='<tr><td>Selecciona al menos 2 coches.</td></tr>';return}
  let h='<tr><th></th>'+cars.map(c=>`<th style="white-space:normal;vertical-align:bottom;min-width:170px;border-top:5px solid ${carCol(c)}">${imgTag(c,170,96)}<div style="margin-top:4px">${dot(carCol(c))}${esc(nm(c))}</div></th>`).join('')+'</tr>',g='';
  const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
  h+=`<tr><td>Tipo</td>${cars.map(c=>`<td>${esc(c.t||'–')}</td>`).join('')}</tr>`;
+ h+=`<tr><td>Mecánica</td>${cars.map(c=>`<td style="white-space:normal">${esc(mechLabel(c))}</td>`).join('')}</tr>`;
  h+=row('Datos completos (%)',cars.map(c=>completeness(c)),'high',v=>v+' %');
  h+=`<tr><td class="mu">Por apartado</td>${cars.map(c=>`<td class="mu" style="white-space:normal;min-width:120px">${compGroups(c).filter(([,hh,t])=>hh<t).map(([g,hh,t])=>`${esc(g)} ${hh}/${t}`).join('<br>')||'Todo completo'}</td>`).join('')}</tr>`;
  ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
@@ -863,7 +895,7 @@ function scoreList(L){const rng={};ALLN.forEach(n=>{const v=L.map(c=>val(c,n[0])
   eqW.forEach(e=>{const wt=S.wE[e[0]];w+=wt;if(c.eq&&c.eq[e[0]]===true)s+=wt});
   return{c,s:w?100*s/w:null}}).sort((a,b)=>(b.s??-1)-(a.s??-1))}
 function renderRank(){const L=filt();
- $('rank').innerHTML=L.length?'<tr><th>#</th><th></th><th>Coche</th><th>Puntuación</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L).map((r,i)=>`<tr><td><b>${i+1}</b></td><td>${thumb(r.c,56,32)}</td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join(''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
+ $('rank').innerHTML=L.length?'<tr><th>#</th><th></th><th>Coche</th><th>Puntuación</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L.map(withMech)).map((r,i)=>`<tr><td><b>${i+1}</b></td><td>${thumb(r.c,56,32)}</td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join(''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
 function renderWeights(){
  $('wn').innerHTML=ALLN.filter(n=>n[4]).map(n=>`<label>${n[1]}<input type="number" min="0" max="10" value="${S.wN[n[0]]||0}" onchange="S.wN['${n[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('');
  $('we').innerHTML=EQ.map(e=>`<label>${esc(e[1])}<input type="number" min="0" max="10" value="${S.wE[e[0]]||0}" onchange="S.wE['${e[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('')}
@@ -887,7 +919,7 @@ const CG=[
  ['punt','Puntuación y datos',()=>{const sc=new Map(scoreList(filt()).map(r=>[r.c.id,r.s]));return[{t:'Puntuación del ranking',dir:'high',get:c=>sc.get(c.id)??null},{t:'Datos completos (%)',dir:'high',get:c=>completeness(c)},nSpec('anio')]}]
 ];
 function chartCars(){return S.cmode==='comp'?S.sel.map(byId).filter(Boolean):filt()}
-function renderChartSel(){const g=$('cgrp');if(!g)return;g.innerHTML=CG.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');g.value=CG.some(x=>x[0]===S.cgrp)?S.cgrp:'costes';$('cmode').value=S.cmode==='comp'?'comp':'all'}
+function renderChartSel(){const g=$('cgrp');if(!g)return;g.innerHTML=CG.map(([k,l])=>`<option value="${k}">${l}</option>`).join('');g.value=CG.some(x=>x[0]===S.cgrp)?S.cgrp:'costes';$('cmode').value=S.cmode==='comp'?'comp':'all';$('cmech').checked=S.cmech!==0}
 const fmtMinS=m=>{const t=Math.round(m),h=Math.floor(t/60),mm=t%60;return h?`${h}h${String(mm).padStart(2,'0')}`:`${mm} min`};
 function chartCard(sp,cars){
  if(sp.curves){const cc=cars.filter(hasCurve).slice(0,8);if(!cc.length)return'';
@@ -897,11 +929,12 @@ function chartCard(sp,cars){
   return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t" style="display:flex;flex-direction:column;gap:2px;background:none;height:auto"><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--ac);width:${Math.max(0,100*(r.a||0)/m)}%"></span></span><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:#e8913a;width:${Math.max(0,100*(r.b||0)/m)}%"></span></span></span><span class="v ${i===0?'best':''}" style="line-height:1.15">${r.e?'≈ ':''}${r.a==null?'–':f(r.a)}<br>${r.e?'≈ ':''}${r.b==null?'–':f(r.b)}</span></div>`).join('')+'</div>'}
  let rows=cars.map(c=>({n:nm(c),c,v:sp.get(c)})).filter(r=>r.v!=null);if(!rows.length)return'';
  rows.sort((a,b)=>sp.dir==='high'?b.v-a.v:a.v-b.v);const m=Math.max(...rows.map(r=>r.v),0)||1;
- return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v ${i===0&&rows.length>1?'best':''}">${f(r.v)}</span></div>`).join('')+'</div>'}
-function renderChart(){if(!$('cgrp'))return;const cars=chartCars(),grp=CG.find(x=>x[0]===S.cgrp)||CG[0];
+ return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n+(r.c._trims?' — '+r.c._trims.join(', '):''))}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v ${i===0&&rows.length>1?'best':''}">${f(r.v)}</span></div>`).join('')+'</div>'}
+const ENGG=['viajes','prest','consumo','carga'];
+function renderChart(){if(!$('cgrp'))return;const grp=CG.find(x=>x[0]===S.cgrp)||CG[0],raw=chartCars(),grpd=ENGG.includes(grp[0])&&S.cmech!==0,cars=grpd?mechCars(raw):raw.map(withMech);
  if(S.cmode==='comp'&&cars.length<1){$('chart').innerHTML='<p class="mu">No hay coches marcados en Comparar.</p>';$('cleg').innerHTML='';return}
  const specs=grp[2]().filter(Boolean),cards=specs.map(sp=>chartCard(sp,cars)),empty=specs.filter((sp,i)=>!cards[i]).map(sp=>sp.t);
- $('cleg').innerHTML=`${cars.length} coche${cars.length===1?'':'s'} · el mejor de cada gráfica, arriba y en verde`+(specs.some(s=>s.pair)?' · <span style="color:var(--ac)">■</span> favorable <span style="color:#e8913a">■</span> desfavorable (frío y viento) · ≈ estimado':'');
+ $('cleg').innerHTML=(grpd&&cars.length<raw.length?`${raw.length} versiones agrupadas en ${cars.length} mecánicas (mismo motor y tracción; el acabado no cuenta) · `:'')+`${cars.length} coche${cars.length===1?'':'s'} · el mejor de cada gráfica, arriba y en verde`+(specs.some(s=>s.pair)?' · <span style="color:var(--ac)">■</span> favorable <span style="color:#e8913a">■</span> desfavorable (frío y viento) · ≈ estimado':'');
  $('chart').innerHTML=(cards.join('')||'<p class="mu">Ningún coche tiene datos de este grupo todavía. Prueba «Completar ficha».</p>')+(empty.length&&cards.some(Boolean)?`<p class="mu" style="grid-column:1/-1">Sin datos todavía: ${empty.map(esc).join(' · ')}.</p>`:'')}
 
 /* ---- ajustes ---- */
