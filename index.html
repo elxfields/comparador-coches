@@ -30,7 +30,7 @@ button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#f
 .eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
 .bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:150px;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
-.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:104px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.pg{display:none}.pg.on{display:block}
+.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:104px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:20px;padding:3px 4px;font-size:12px;max-width:100%}.chip .cn{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip button{border:none;background:none;padding:0 4px}.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:4px}.bcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac)}.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none}.logo.sm{width:34px;height:34px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:600}.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 10px}.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 8px;border-radius:12px;border-width:2px;overflow:hidden;gap:2px}.mcard.on{border-color:var(--ac)}.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}.mcard .tick{position:absolute;top:6px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}.mcard .mn,.mcard .mu{padding:0 8px}.mn{font-weight:600;margin-top:4px}@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11px}}.pg{display:none}.pg.on{display:block}
 textarea{width:100%;height:110px;font:12px monospace}
 a{color:var(--ac)}
 </style>
@@ -77,7 +77,6 @@ a{color:var(--ac)}
 
 <div class="pg" id="pg-comp">
 <details class="box" open id="pickbox"><summary id="picksum">Elige coches para comparar</summary>
-<p class="mu" style="margin:6px 0">Hasta 5 coches; si marcas un sexto, se quita el primero que elegiste. Solo salen los que pasan los filtros. <button onclick="S.sel=[];save();refresh()">Quitar selección</button></p>
 <div id="pick"></div>
 </details>
 <p class="mu">En verde, el mejor valor de cada fila.</p><div class="sc"><table id="cmp"></table></div></div>
@@ -131,7 +130,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-24.1';
+const APP_VER='2026-11-24.2';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -735,11 +734,29 @@ function takeShared(){const p=new URLSearchParams(location.search);const txt=[p.
 
 /* ---- comparar ---- */
 function bestIdx(vals,dir){const v=vals.map(x=>x==null?null:x);const f=v.filter(x=>x!=null);if(f.length<2||!dir)return -1;const b=dir==='high'?Math.max(...f):Math.min(...f);if(f.every(x=>x===b))return -1;return v.indexOf(b)}
+// Selector visual de Comparar: primero la marca (con logotipo), luego los coches de esa marca (con foto).
+const LOGO_V='2.5.0';
+const brandSlug=m=>String(m||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim().replace(/\s+/g,'-').replace(/^mercedes$/,'mercedes-benz');
+const brandLogo=m=>`https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@${LOGO_V}/logos/optimized/${brandSlug(m)}.png`;
+function pickBrand(m){S.pickBrand=m;save();renderPick();const b=$('pickbox');if(b)b.scrollIntoView({block:'start'})}
 function renderPick(){const L=filt(),by={},cmp=(a,b)=>a.localeCompare(b,'es',{sensitivity:'base'});
  L.forEach(c=>{const m=(c.marca||'').trim()||'(Sin marca)';(by[m]=by[m]||[]).push(c)});
- const marcas=Object.keys(by).sort(cmp);
- $('picksum').textContent=`Elige coches para comparar (${S.sel.filter(byId).length} de 5)`;
- $('pick').innerHTML=marcas.length?marcas.map(m=>`<h3>${esc(m)}</h3><div class="eqg">${by[m].sort((a,b)=>cmp((a.modelo||'')+' '+(a.version||''),(b.modelo||'')+' '+(b.version||''))).map(c=>`<label class="row"><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"><span>${esc(c.modelo||'(sin modelo)')}${c.version?' <span class="mu">'+esc(c.version)+'</span>':''}</span></label>`).join('')}</div>`).join(''):'<p class="mu">No hay coches (o ninguno pasa los filtros).</p>'}
+ const marcas=Object.keys(by).sort(cmp),sel=S.sel.map(byId).filter(Boolean);
+ $('picksum').textContent=`Elige coches para comparar (${sel.length} de 5)`;
+ if(S.pickBrand&&!by[S.pickBrand])S.pickBrand=null;
+ const tray=sel.length?`<div class="tray">${sel.map(c=>`<span class="chip">${imgTag(c,44,26)}<span class="cn">${esc(nm(c))}</span><button title="Quitar de la comparación" onclick="selCar(${c.id},false)">✕</button></span>`).join('')}<button onclick="S.sel=[];save();refresh()">Quitar todos</button></div>`
+  :'<p class="mu" style="margin:8px 0">Elige una marca y toca los coches que quieras comparar (hasta 5; si eliges un sexto, sale el primero).</p>';
+ let body;
+ if(!S.pickBrand){
+  body=marcas.length?`<div class="bgrid">${marcas.map(m=>{const n=by[m].length,s=by[m].filter(c=>S.sel.includes(c.id)).length;
+   return `<button class="bcard${s?' on':''}" onclick="pickBrand(${esc(JSON.stringify(m))})"><span class="logo"><img src="${brandLogo(m)}" alt="${esc(m)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><span class="ini" style="display:none">${esc(m.slice(0,2).toUpperCase())}</span></span><span class="bn">${esc(m)}</span><span class="mu">${n} coche${n>1?'s':''}${s?` · <b style="color:var(--ac)">${s} elegido${s>1?'s':''}</b>`:''}</span></button>`}).join('')}</div>`
+   :'<p class="mu">No hay coches (o ninguno pasa los filtros).</p>';
+ }else{
+  const list=by[S.pickBrand].slice().sort((a,b)=>cmp((a.modelo||'')+' '+(a.version||''),(b.modelo||'')+' '+(b.version||'')));
+  body=`<div class="pickhead"><button onclick="pickBrand(null)">← Marcas</button><span class="logo sm"><img src="${brandLogo(S.pickBrand)}" alt="" onerror="this.style.display='none'"></span><b>${esc(S.pickBrand)}</b></div>
+  <div class="mgrid">${list.map(c=>{const on=S.sel.includes(c.id),u=carImg(c);
+   return `<button class="mcard${on?' on':''}" onclick="selCar(${c.id},${!on})" aria-pressed="${on}"><span class="ph">${u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'<span class="noimg">🚗</span>'}${on?'<span class="tick">✓</span>':''}</span><span class="mn">${esc(c.modelo||'(sin modelo)')}</span><span class="mu">${esc(c.version||'')}</span><span class="mu">${c.precio?fmt(c.precio)+' €':''}${c.t?(c.precio?' · ':'')+esc(c.t):''}</span></button>`}).join('')}</div>`}
+ $('pick').innerHTML=tray+body}
 function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean);
  if(cars.length<2){$('cmp').innerHTML='<tr><td>Selecciona al menos 2 coches.</td></tr>';return}
  let h='<tr><th></th>'+cars.map(c=>`<th style="white-space:normal;vertical-align:bottom;min-width:120px">${imgTag(c,120,68)}<div style="margin-top:4px">${esc(nm(c))}</div></th>`).join('')+'</tr>',g='';
