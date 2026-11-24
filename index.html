@@ -130,7 +130,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-24.4';
+const APP_VER='2026-11-24.5';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -173,12 +173,19 @@ const fmt=v=>v==null?'–':(+(+v).toFixed(2)).toLocaleString('es-ES');
 const nm=c=>[c.marca,c.modelo,c.version].filter(Boolean).join(' ')||'(sin nombre)';
 const byId=id=>S.cars.find(c=>c.id===id);
 // Imagen del coche: foto oficial encontrada con «Completar ficha» o la que pegues a mano. Nunca miniaturas de YouTube.
-function carImg(c){return c.img&&!/ytimg\.com|youtube\.com/.test(c.img)?c.img:null}
+function officialImg(c){return c.img&&!/ytimg\.com|youtube\.com/.test(c.img)?c.img:null}
+// Respaldo: miniatura del primer vídeo de YouTube del coche (16:9).
+function ytThumb(c){const s=(c.src||[]).find(x=>ytId(x.url));return s?`https://i.ytimg.com/vi/${ytId(s.url)}/mqdefault.jpg`:null}
+function carImg(c){return officialImg(c)||ytThumb(c)}
+// Si la foto oficial no carga, se cambia a la miniatura de YouTube; si tampoco hay, se oculta.
+const badImg=new Set(); // fotos oficiales que no han cargado en este navegador
+const needsPhoto=c=>!officialImg(c)||badImg.has(c.id);
+const imgFb=(c,hide)=>{const o=officialImg(c),y=ytThumb(c);return (o&&y?`data-fb="${esc(y)}" `:'')+`onerror="${o?'badImg.add('+c.id+');':''}if(this.dataset.fb&&this.src!==this.dataset.fb){this.src=this.dataset.fb}else{${hide}}"`};
 const imgTag=(c,w,h)=>{const u=carImg(c),box=`width:${w}px;height:${h}px;border-radius:6px;display:block`;
- return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="${box};object-fit:contain;background:var(--bg)" onerror="this.outerHTML='<span style=&quot;${box};background:var(--bg)&quot;></span>'">`:
+ return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="${box};object-fit:contain;background:var(--bg)" ${imgFb(c,"this.outerHTML='<span style=&quot;"+box+";background:var(--bg)&quot;></span>'")}>`:
  `<span title="Sin foto oficial todavía: pulsa «Completar ficha»" style="${box};background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:${Math.round(h*0.45)}px;opacity:.45">🚗</span>`};
 // Miniatura en línea junto al nombre del coche (nada si no tiene foto).
-const thumb=(c,w=34,h=19)=>{const u=c&&carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:4px;flex:none" onerror="this.remove()">`:''};
+const thumb=(c,w=34,h=19)=>{const u=c&&carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" style="width:${w}px;height:${h}px;object-fit:cover;border-radius:4px;flex:none" ${imgFb(c,'this.remove()')}>`:''};
 // Comprueba que una URL es una imagen que carga y tiene un tamaño razonable.
 function testImg(u){return new Promise(res=>{const im=new Image();let done=false;const fin=v=>{if(!done){done=true;res(v)}};
  im.referrerPolicy='no-referrer';im.onload=()=>fin(im.naturalWidth>=300&&im.naturalHeight>=150);im.onerror=()=>fin(false);setTimeout(()=>fin(false),10000);im.src=u})}
@@ -278,8 +285,8 @@ function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
  const webMark=k=>c.fsrc&&c.fsrc[k]==='modelo'?' <span title="Dato del conocimiento de Gemini, sin verificar en web">🧠</span>':c.fsrc&&c.fsrc[k]?(/^https?:/.test(c.fsrc[k])?` <a href="${esc(c.fsrc[k])}" target="_blank" rel="noopener" title="Dato sacado de internet: ${esc(c.fsrc[k])}">🌐</a>`:' <span title="Dato sacado de internet">🌐</span>'):'';
  const webSrc=[...new Set(Object.values(c.fsrc||{}).filter(u=>/^https?:/.test(u)))];
  $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
- <div style="margin-top:8px">${imgTag(c,240,135)}${carImg(c)&&c.imgSrc?`<div class="mu">Foto: ${esc(c.imgSrc)}</div>`:''}</div>${compHtml(c)}
- <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha${carImg(c)?'':' y buscar foto oficial'}</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
+ <div style="margin-top:8px">${imgTag(c,240,135)}${officialImg(c)&&c.imgSrc?`<div class="mu">Foto: ${esc(c.imgSrc)}</div>`:(ytThumb(c)?'<div class="mu">Foto: miniatura del vídeo de YouTube (no hay foto oficial)</div>':'')}</div>${compHtml(c)}
+ <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha${officialImg(c)?'':' y buscar foto oficial'}</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
  <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label></div>`+
  grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
  [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
@@ -477,7 +484,7 @@ function queueFicha(id,quiet){const c=byId(id);if(!c)return false;const key='fic
  Q.items=Q.items.filter(x=>x.yt!==key);Q.items.push({yt:key,kind:'ficha',car:id,url:'',canal:'',st:'pend',msg:'',added:Date.now()});
  if(!quiet){saveQ();renderQ();schedule(300);$('mlog').textContent=`Ficha de ${nm(c)} añadida a la cola`+(syOn()&&!SY.proc?'; la completará el PC.':'.');S.tab='base';renderTabs()}
  return true}
-function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100||!carImg(c));if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
+function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100||needsPhoto(c));if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
  if(!confirm(`Se buscarán en internet los datos que faltan de ${L.length} coche${L.length>1?'s':''} (unos 5-20 k tokens cada uno). ¿Seguir?`))return;
  const n=L.filter(c=>queueFicha(c.id,true)).length;saveQ();renderQ();schedule(300);$('mlog').textContent=`${n} ficha${n>1?'s':''} añadida${n>1?'s':''} a la cola.`;window.scrollTo(0,0)}
 // Búsqueda web en las fichas: 'auto' (se desactiva 24 h si Google la rechaza por cuota dos veces seguidas), 'si' o 'no'.
@@ -517,7 +524,7 @@ Fuentes preferidas, en este orden según el dato:
 ${ev?'- ev-database.org: consumos y autonomías reales (combinado, autopista con clima templado y con frío), batería útil, carga 10-80 % y potencia media de carga.\n':''}- spritmonitor.de: consumo real medio de usuarios.
 - euroncap.com: estrellas Euro NCAP.
 
-${carImg(c)?'':`Imágenes ("imagenes"): hasta 5 URLs DIRECTAS a archivos de imagen (.jpg, .png o .webp) de este modelo, exterior, vista de 3/4 delantera si es posible. Solo imágenes oficiales: web del fabricante o su sala de prensa / media (p. ej. media.<marca>.com, <marca>-press, newsroom). Nada de YouTube, foros, concesionarios ni bancos de imágenes. Copia las URLs exactas que aparezcan en esas páginas; no las construyas.
+${!needsPhoto(c)?'':`Imágenes ("imagenes"): hasta 5 URLs DIRECTAS a archivos de imagen (.jpg, .png o .webp) de este modelo, exterior, vista de 3/4 delantera si es posible. Solo imágenes oficiales: web del fabricante o su sala de prensa / media (p. ej. media.<marca>.com, <marca>-press, newsroom). Nada de YouTube, foros, concesionarios ni bancos de imágenes. Copia las URLs exactas que aparezcan en esas páginas; no las construyas.
 `}
 ${campos}
 
@@ -562,7 +569,7 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
  if(web){const gm=(cand&&cand.groundingMetadata)||{},wl=(gm.groundingChunks||[]).map(x=>x.web).filter(Boolean).map(w=>({url:w.uri,title:w.title||''}));
   c.web=[...(c.web||[]),...wl].filter((w,i,a)=>a.findIndex(x=>x.title===w.title)===i).slice(0,15)}
  c.notas=c.notas||[];(Array.isArray(o.notas)?o.notas:[]).slice(0,5).forEach(n=>{if(typeof n==='string'&&n){const t=(web?'[web] ':'[Gemini, sin verificar] ')+n;if(!c.notas.includes(t))c.notas.push(t)}});
- let foto='';if(web&&!carImg(c)){const cand2=(Array.isArray(o.imagenes)?o.imagenes:[]).filter(u=>typeof u==='string'&&/^https:\/\//.test(u)&&!/ytimg|youtube|youtu\.be/.test(u)).slice(0,5);
+ let foto='';if(web&&needsPhoto(c)){const cand2=(Array.isArray(o.imagenes)?o.imagenes:[]).filter(u=>typeof u==='string'&&/^https:\/\//.test(u)&&!/ytimg|youtube|youtu\.be/.test(u)).slice(0,5);
   if(cand2.length){it.msg='Comprobando fotos oficiales…';renderQ();for(const u of cand2){if(await testImg(u)){c.img=u;c.imgSrc=u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=' · foto oficial ('+c.imgSrc+')';break}}}
   if(!foto)foto=' · sin foto oficial válida'}
  it.st='ok';it.msg=`${nm(c)}: ${got.length} dato${got.length===1?'':'s'} y ${eqn} equipamiento${eqn===1?'':'s'} nuevos${foto}${web?'':' · sin búsqueda web (🧠 sin verificar)'}`+(it.model&&it.model!==model()?` (con ${it.model})`:'');
@@ -572,7 +579,7 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
 function exportForClaude(){if(!S.cars.length){$('mlog').textContent='No hay coches que exportar.';return}
  const coches=S.cars.map(c=>({id:c.id,marca:c.marca||'',modelo:c.modelo||'',version:c.version||'',t:c.t||'',anio:c.anio??null,carroc:c.carroc||'',
   faltan:NUM.map(n=>n[0]).filter(k=>num(c[k])==null||k==='precio'||k==='precioMin'||(c.fsrc&&c.fsrc[k]==='modelo')),
-  faltanEq:EQ.map(e=>e[0]).filter(k=>!c.eq||typeof c.eq[k]!=='boolean'),sinFoto:!carImg(c),
+  faltanEq:EQ.map(e=>e[0]).filter(k=>!c.eq||typeof c.eq[k]!=='boolean'),sinFoto:needsPhoto(c),
   tiene:Object.fromEntries(NUM.map(n=>[n[0],num(c[n[0]])]).filter(([k,v])=>v!=null))}));
  const out={tipo:'comparador-coches/peticion-fichas',fecha:new Date().toISOString(),
   campos:Object.fromEntries(NUM.map(n=>[n[0],n[1]+(n[2]?' ('+n[2]+')':'')])),equipamiento:Object.fromEntries(EQ.map(e=>[e[0],e[1]])),coches};
@@ -597,7 +604,7 @@ async function importFichasFile(file){if(!file)return;let d;
   let extra='';if(Array.isArray(f.curva)&&f.curva.length>=3&&f.curva.every(p=>Array.isArray(p)&&num(p[0])!=null&&num(p[1])!=null)){c.curva=f.curva.map(p=>[+p[0],+p[1]]).sort((a,b)=>a[0]-b[0]);c.curvaSrc=typeof f.curvaSrc==='string'&&/^https?:\/\//.test(f.curvaSrc)?f.curvaSrc:'';extra=', curva de carga'}
   if(Array.isArray(f.optCarga)&&f.optCarga.length===2&&f.optCarga.every(v=>num(v)!=null))c.optCarga=f.optCarga.map(Number);
   if(typeof f.bateria==='string'&&f.bateria)c.bateria=f.bateria.slice(0,40);
-  let foto='';if(!carImg(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
+  let foto='';if(needsPhoto(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
   res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}${extra}`)}
  // Duplicados: se fusiona el que sobra en el que se conserva (datos, equipamiento, foto, fuentes y notas) y se borra.
@@ -606,7 +613,7 @@ async function importFichasFile(file){if(!file)return;let d;
   pares.forEach(({q,c})=>{c.fsrc=c.fsrc||{};
    NUM.forEach(([k])=>{if(num(c[k])==null&&num(q[k])!=null){c[k]=q[k];if(q.fsrc&&q.fsrc[k])c.fsrc[k]=q.fsrc[k]}});
    c.eq=c.eq||{};Object.entries(q.eq||{}).forEach(([k,v])=>{if(typeof c.eq[k]!=='boolean'&&typeof v==='boolean')c.eq[k]=v});
-   if(!carImg(c)&&carImg(q)){c.img=q.img;c.imgSrc=q.imgSrc}
+   if(!officialImg(c)&&officialImg(q)){c.img=q.img;c.imgSrc=q.imgSrc}
    if(!hasCurve(c)&&Array.isArray(q.curva)){c.curva=q.curva;c.curvaSrc=q.curvaSrc}if(!c.optCarga&&q.optCarga)c.optCarga=q.optCarga;if(!c.bateria&&q.bateria)c.bateria=q.bateria;
    c.src=[...(c.src||[]),...(q.src||[]).filter(s=>!(c.src||[]).some(x=>x.url===s.url))];
    c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
@@ -757,7 +764,7 @@ function renderPick(){const L=filt(),by={},cmp=(a,b)=>a.localeCompare(b,'es',{se
   const list=by[S.pickBrand].slice().sort((a,b)=>cmp((a.modelo||'')+' '+(a.version||''),(b.modelo||'')+' '+(b.version||'')));
   body=`<div class="pickhead"><button onclick="pickBrand(null)">← Marcas</button><span class="logo sm"><img src="${brandLogo(S.pickBrand)}" alt="" onerror="this.style.display='none'"></span><b>${esc(S.pickBrand)}</b></div>
   <div class="mgrid">${list.map(c=>{const on=S.sel.includes(c.id),u=carImg(c);
-   return `<button class="mcard${on?' on':''}" onclick="selCar(${c.id},${!on})" aria-pressed="${on}"><span class="ph">${u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.style.display='none'">`:'<span class="noimg">🚗</span>'}${on?'<span class="tick">✓</span>':''}</span><span class="mn">${esc(c.modelo||'(sin modelo)')}</span><span class="mu">${esc(c.version||'')}</span><span class="mu">${c.precio?fmt(c.precio)+' €':''}${c.t?(c.precio?' · ':'')+esc(c.t):''}</span></button>`}).join('')}</div>`}
+   return `<button class="mcard${on?' on':''}" onclick="selCar(${c.id},${!on})" aria-pressed="${on}"><span class="ph">${u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" ${imgFb(c,"this.style.display='none'")}>`:'<span class="noimg">🚗</span>'}${on?'<span class="tick">✓</span>':''}</span><span class="mn">${esc(c.modelo||'(sin modelo)')}</span><span class="mu">${esc(c.version||'')}</span><span class="mu">${c.precio?fmt(c.precio)+' €':''}${c.t?(c.precio?' · ':'')+esc(c.t):''}</span></button>`}).join('')}</div>`}
  $('pick').innerHTML=tray+body}
 /* ---- gráficos de la comparativa (un color por coche) ---- */
 const carCol=c=>{const i=S.sel.indexOf(c.id);return CCOL[(i<0?0:i)%CCOL.length]};
