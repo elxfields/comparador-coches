@@ -373,7 +373,8 @@ section .cc,details.box .cc{box-shadow:none}
 <p class="mu">Gemini busca en Google desde la propia app. Necesita una clave gratuita y la cola de vídeos activa.</p>
 <ol class="steps">
 <li>Pon tu clave de Gemini en <b>Ajustes</b>. Si usas varios dispositivos, el que procesa la cola es el PC.</li>
-<li>Abre la ficha de un coche y pulsa <b>Completar ficha</b>, o completa todas a la vez con el botón de abajo. Las fichas entran en la cola de «Añadir desde vídeos de YouTube».</li>
+<li>Abre la ficha de un coche y pulsa <b>Completar ficha</b>, o usa <b>Completar todas</b>. Las fichas entran en la cola de «Añadir desde vídeos de YouTube».</li>
+<li><b>Completar todas</b> no repite trabajo: solo pasa por los coches a los que les falta algún dato clave (precio, potencia, largo, maletero y, según el tipo, batería, autonomía y consumos reales o tiempo de carga) o la foto. Se salta los que ya completó Claude y los que Gemini revisó hace menos de 30 días. Para repetir un coche concreto, usa «Completar ficha» en su ficha.</li>
 <li>Los coches nuevos que salen de un vídeo se completan solos si está marcada la casilla «Completar con internet la ficha de cada coche nuevo» (Ajustes → Límites de uso de la cola).</li>
 </ol>
 <p class="gact"><button onclick="queueAllFichas()">Completar todas con Gemini</button> <button onclick="goTab('set')">Ir a Ajustes</button></p>
@@ -459,7 +460,7 @@ section .cc,details.box .cc{box-shadow:none}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.6';
+const APP_VER='2026-11-28.7';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -667,7 +668,7 @@ const CTAG='<i class="ctag" title="Datos buscados en internet por Claude e impor
 function carRow(c){const p=completeness(c);
  return `<li><button class="lrow" onclick="openEdit(${c.id})" aria-label="Abrir ficha de ${esc(nm(c))}, datos completos ${p} %"><span class="lph">${thumb(c,56,32)||'<span class="lnoph"></span>'}</span><span class="lnm"><b>${esc([c.marca,c.modelo].filter(Boolean).join(' ')||'(sin nombre)')}</b><span>${byClaude(c)?CTAG:''}${esc([c.version,c.t].filter(Boolean).join(' · '))}</span></span><span class="lpc"><span class="meter"><i style="width:${p}%;background:${compCol(p)}"></i></span><b>${p} %</b></span></button></li>`}
 function renderTable(){const q=lc(QS),L=filt().filter(c=>!q||lc(nm(c)).includes(q)).sort((a,b)=>nm(a).localeCompare(nm(b),'es',{sensitivity:'base'}));$('fsum').textContent=nActive()?`Filtros · ${nActive()}`:'Filtros';$('fbox').classList.toggle('on',nActive()>0);pageSub();
- {const inc=S.cars.filter(c=>completeness(c)<100).length;$('gpill').textContent=S.cars.length?(inc?inc+' por completar':'Todas completas'):''}
+ {const inc=S.cars.filter(c=>!skipWhy(c)).length;$('gpill').textContent=S.cars.length?(inc?inc+' con datos clave por completar':'Datos clave completos'):''}
  const avg=L.length?Math.round(L.reduce((s,c)=>s+completeness(c),0)/L.length):0;
  $('lsum').innerHTML=`Coches <span class="pill">${L.length}${q?` con «${esc(QS.trim())}»`:''}</span>${L.length?`<span class="mu lavg">Datos completos de media: ${avg} % · ${L.filter(byClaude).length} con ficha de Claude</span>`:''}`;
  if(!S.cars.length){$('clist').innerHTML=`<div class="empty"><b>Todavía no hay coches</b>Pega un enlace de YouTube en «Añadir desde vídeos de YouTube» o añade uno a mano.</div>`;return}
@@ -904,9 +905,18 @@ function queueFicha(id,quiet){const c=byId(id);if(!c)return false;const key='fic
  Q.items=Q.items.filter(x=>x.yt!==key);Q.items.push({yt:key,kind:'ficha',car:id,url:'',canal:'',st:'pend',msg:'',added:Date.now()});
  if(!quiet){saveQ();renderQ();schedule(300);$('mlog').textContent=`Ficha de ${nm(c)} añadida a la cola`+(syOn()&&!SY.proc?'; la completará el PC.':'.');S.tab='base';renderTabs()}
  return true}
-function queueAllFichas(){const L=S.cars.filter(c=>completeness(c)<100||needsPhoto(c));if(!L.length){$('mlog').textContent='Todas las fichas están completas.';return}
- if(!confirm(`Se buscarán en internet los datos que faltan de ${L.length} coche${L.length>1?'s':''} (unos 5-20 k tokens cada uno). ¿Seguir?`))return;
- const n=L.filter(c=>queueFicha(c.id,true)).length;saveQ();renderQ();schedule(300);$('mlog').textContent=`${n} ficha${n>1?'s':''} añadida${n>1?'s':''} a la cola.`;window.scrollTo(0,0)}
+// «Completar todas»: solo coches a los que les falta algún dato clave o la foto, sin repetir los que ya se buscaron.
+// Datos clave = los que se usan en las cifras de la ficha, el ranking y los viajes (con los de su misma mecánica).
+const KEYF=c=>{const b=['precio','cv','largo','mal'];return c.t==='BEV'?b.concat(['bat','rangoReal','kwh100Real','kwh100AutT','dc','c1080']):c.t==='PHEV'?b.concat(['bat','rangoE','l100Real']):b.concat(['l100Real'])};
+function keyGaps(c){const m=withMech(c);return KEYF(c).filter(k=>k==='c1080'?num(m.c1080)==null&&!hasCurveT(m):num(m[k])==null)}
+const GEM_DAYS=30,gemRecent=c=>c.gemT>Date.now()-GEM_DAYS*864e5;
+// Motivo para saltar un coche en «Completar todas» (null = se completa)
+function skipWhy(c){if(byClaude(c))return'claude';if(gemRecent(c))return'gemini';if(!keyGaps(c).length&&!needsPhoto(c))return'ok';return null}
+function queueAllFichas(){const L=S.cars.filter(c=>!skipWhy(c)),k=w=>S.cars.filter(c=>skipWhy(c)===w).length,nc=k('claude'),ng=k('gemini'),no=k('ok');
+ const salta=[nc?`${nc} ya completado${nc>1?'s':''} por Claude`:'',ng?`${ng} que Gemini revisó hace menos de ${GEM_DAYS} días`:'',no?`${no} que ya tiene${no>1?'n':''} todos los datos clave`:''].filter(Boolean).join(', ');
+ if(!L.length){$('mlog').textContent='No hay fichas que merezca la pena completar ahora'+(salta?`: se saltan ${salta}.`:'.')+' Si quieres repetir un coche concreto, abre su ficha y pulsa «Completar ficha».';return}
+ if(!confirm(`Se buscarán en internet los datos que faltan de ${L.length} coche${L.length>1?'s':''} a los que les falta algún dato clave o la foto (unos 5-20 k tokens cada uno, ~${fmtK(L.length*12000)} en total).`+(salta?`\n\nSe saltan ${salta}.`:'')+'\n\n¿Seguir?'))return;
+ const n=L.filter(c=>queueFicha(c.id,true)).length;saveQ();renderQ();schedule(300);$('mlog').textContent=`${n} ficha${n>1?'s':''} añadida${n>1?'s':''} a la cola`+(salta?` (se saltan ${salta}).`:'.');window.scrollTo(0,0)}
 // Búsqueda web en las fichas: 'auto' (se desactiva 24 h si Google la rechaza por cuota dos veces seguidas), 'si' o 'no'.
 const GSK='cmp2_gs',GSF='cmp2_gsfail',GSOFF='cmp2_gsoff';
 const gsMode=()=>lsGet(GSK)||'auto';
@@ -992,6 +1002,7 @@ async function doFicha(it,u){const c=byId(it.car);if(!c){it.st='err';it.msg='Ese
  let foto='';if(web&&needsPhoto(c)){const cand2=(Array.isArray(o.imagenes)?o.imagenes:[]).filter(u=>typeof u==='string'&&/^https:\/\//.test(u)&&!/ytimg|youtube|youtu\.be/.test(u)).slice(0,5);
   if(cand2.length){it.msg='Comprobando fotos oficiales…';renderQ();for(const u of cand2){if(await testImg(u)){c.img=u;c.imgSrc=u.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=' · foto oficial ('+c.imgSrc+')';break}}}
   if(!foto)foto=' · sin foto oficial válida'}
+ if(web)c.gemT=Date.now(); // ya buscada en internet: «Completar todas» no la repite en 30 días
  it.st='ok';it.msg=`${nm(c)}: ${got.length} dato${got.length===1?'':'s'} y ${eqn} equipamiento${eqn===1?'':'s'} nuevos${foto}${web?'':' · sin búsqueda web (🧠 sin verificar)'}`+(it.model&&it.model!==model()?` (con ${it.model})`:'');
  save();renderAll()}
 
