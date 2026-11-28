@@ -5,39 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Comparador de coches</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1d6fd6">
+<meta name="theme-color" content="#f1f1ee" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon-192.png">
 <style>
-:root{--bg:#f6f6f3;--card:#fff;--tx:#1d1d1b;--mu:#6b6b66;--bd:#dcdcd5;--ac:#1d6fd6;--ok:#1a8a4a;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--card:#222426;--tx:#ececea;--mu:#9a9a94;--bd:#3a3c3f;--ac:#5aa2ff;--ok:#4cc27d;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#17181a;--card:#222426;--tx:#ececea;--mu:#9a9a94;--bd:#3a3c3f;--ac:#5aa2ff;--ok:#4cc27d;color-scheme:dark}
+:root{--bg:#f1f1ee;--card:#fcfcfb;--card2:#f5f5f2;--tx:#161615;--mu:#5f5e5a;--bd:#e3e2dc;--ac:#2a78d6;--ok:#0a7d32;--bad:#c62f2e;
+ --sh:0 1px 2px rgba(20,20,15,.05),0 8px 24px rgba(20,20,15,.05);
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111110;--card:#1a1a19;--card2:#232321;--tx:#f0efec;--mu:#a9a89f;--bd:#30302d;--ac:#3987e5;--ok:#4cc27d;--bad:#e66767;
+ --sh:0 1px 0 rgba(255,255,255,.03),0 8px 24px rgba(0,0,0,.35);
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#0ca30c;--s7:#9085e9;--s8:#e66767;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111110;--card:#1a1a19;--card2:#232321;--tx:#f0efec;--mu:#a9a89f;--bd:#30302d;--ac:#3987e5;--ok:#4cc27d;--bad:#e66767;
+ --sh:0 1px 0 rgba(255,255,255,.03),0 8px 24px rgba(0,0,0,.35);
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#0ca30c;--s7:#9085e9;--s8:#e66767;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;padding:12px 16px}
-h1{font-size:20px;margin:4px 0 10px}h2{font-size:16px;margin:0 0 8px}h3{font-size:13px;margin:12px 0 4px;color:var(--mu);text-transform:uppercase;letter-spacing:.04em}
-section,details.box{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:12px}
-details.box>summary{cursor:pointer;font-weight:600}
-.sc{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13px}th,td{padding:4px 6px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
-th{color:var(--mu);font-weight:600}
-input,select,button,textarea{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:5px 7px}
-input[type=number]{width:90px}input[type=text]{width:100%}input[type=checkbox]{width:auto}
-button{cursor:pointer}button.p{background:var(--ac);color:#fff;border-color:var(--ac)}
-button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#fff;border-color:var(--ac)}
-.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:-1px}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
-.g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:2px}.g input,.g select{width:100%}
-.eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
-.eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
+html{background:var(--bg)}
+body{margin:0 auto;max-width:1320px;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;padding:0 16px 40px;-webkit-font-smoothing:antialiased}
+.appbar{display:flex;align-items:center;gap:12px;padding:16px 2px 12px}
+.appbar img{width:36px;height:36px;border-radius:10px;box-shadow:var(--sh)}
+.appbar #sybadge{margin-left:auto;font-size:12px;background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:3px 10px}
+.appbar #sybadge:empty{display:none}
+h1{font-size:21px;font-weight:700;letter-spacing:-.015em;margin:0}
+h2{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
+h3{font-size:11.5px;margin:18px 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+section,details.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+section details.box,details.box details.box{background:var(--card2);border-color:transparent;box-shadow:none;border-radius:14px}
+details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(-45deg);transition:transform .15s;margin:0 2px}
+details[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+details.box>summary{font-weight:650;font-size:15px}
+.sc{overflow-x:auto;border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:7px 10px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{color:var(--mu);font-weight:650;font-size:12px}
+tr:hover>td{background:color-mix(in srgb,var(--ac) 5%,transparent)}
+input,select,button,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:7px 10px}
+input,select,textarea{transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+input[type=number]{width:96px}input[type=text]{width:100%}input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--ac)}
+button{cursor:pointer;font-weight:550;transition:background .15s,border-color .15s,color .15s}
+:where(button:not(.tab)):hover{background:var(--card2);border-color:color-mix(in srgb,var(--ac) 40%,var(--bd))}
+:where(button):active{transform:translateY(1px)}
+:where(button):focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.p:hover{background:color-mix(in srgb,var(--ac) 86%,#000);border-color:transparent}
+.tabs{position:sticky;top:6px;z-index:20;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:5px;margin:0 0 14px;background:color-mix(in srgb,var(--card) 85%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--sh)}
+.tabs::-webkit-scrollbar{display:none}
+button.tab{flex:none;border:0;background:transparent;border-radius:10px;padding:8px 16px;font-weight:600;color:var(--mu);white-space:nowrap}
+button.tab:hover{background:var(--card2);color:var(--tx)}
+button.tab.on{background:var(--ac);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--ac) 45%,transparent)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px;font-weight:550}.g input,.g select{width:100%}
+.eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 12px}
+.eqg label.row{flex-direction:row;align-items:center;gap:8px;color:var(--tx);font-size:13px;font-weight:400}
 .wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:6px 22px}.wrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 22px;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit)}.wrow .wn{display:flex;flex-direction:column;line-height:1.2}.wrow input[type=range]{width:100%;accent-color:var(--ac);padding:0}.wrow b{text-align:right}.wsec{border:1px solid var(--bd);border-radius:8px;padding:6px 10px;margin:6px 0}.wsec summary{cursor:pointer;font-weight:600;font-size:14px}.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:0 22px;margin-top:4px}.wrow2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}.wrow2.off>span:first-child{opacity:.6}.stars{white-space:nowrap;flex:none}.stars button{background:none;border:0;padding:0 1px;margin:0;font-size:20px;line-height:1;color:var(--bd);cursor:pointer;min-width:0;box-shadow:none}.stars button.on{color:#f5b301}.stars button:hover{transform:scale(1.15)}.parts{display:flex;gap:3px;align-items:flex-end;height:22px}.parts i{display:block;width:7px;background:var(--ac);border-radius:2px 2px 0 0;opacity:.85}
 .bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:5px;min-width:0}.bar .l .ln{overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:12px;overflow-wrap:anywhere}
 .bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
 .mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:120px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:20px;padding:3px 4px;font-size:12px;max-width:100%}.chip .cn{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip button{border:none;background:none;padding:0 4px}.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:4px}.bcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac)}.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none}.logo.sm{width:34px;height:34px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:600}.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 10px}.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 8px;border-radius:12px;border-width:2px;overflow:hidden;gap:2px}.mcard.on{border-color:var(--ac)}.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}.mcard .tick{position:absolute;top:6px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}.mcard .mn,.mcard .mu{padding:0 8px}.mn{font-weight:600;margin-top:4px}@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11px}}.cmpwrap{max-height:82vh;overflow:auto;border-radius:8px}#cmp tr:first-child th{position:sticky;top:0;z-index:3;background:var(--card);box-shadow:0 1px 0 var(--bd)}#cmp tr>:first-child:not([colspan]){position:sticky;left:0;z-index:2;background:var(--card);white-space:normal;min-width:130px}#cmp tr:first-child>:first-child{z-index:4}@media (max-width:520px){#cmp th img{width:120px!important;height:68px!important}#cmp tr:first-child th{min-width:124px!important}#cmp tr>:first-child:not([colspan]){min-width:96px;max-width:112px;font-size:12px}}.pg{display:none}.pg.on{display:block}
 textarea{width:100%;height:110px;font:12px monospace}
-a{color:var(--ac)}
+/* rediseño: componentes */
+.bar{margin:5px 0;gap:10px}
+.bar .t{background:var(--card2);border-radius:4px;height:14px}
+.bar .f{border-radius:0 4px 4px 0}
+.bar .v{color:var(--tx);font-variant-numeric:tabular-nums;font-size:12.5px}
+.bar .v.best,.best{color:var(--ok);font-weight:700}
+.cgrid{gap:14px}
+.cc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--sh)}
+section .cc,details.box .cc{box-shadow:none}
+.cc h4{font-size:13.5px;font-weight:650;margin:0 0 10px;letter-spacing:-.005em}
+.mu{color:var(--mu)}
+.chip{background:var(--card2);padding:4px 6px}
+.g label.row{flex-direction:row;align-items:center;gap:8px;color:var(--tx);font-size:13px}
+.wsec{background:var(--card);border-color:var(--bd);border-radius:12px;padding:8px 12px}
+.wrow2{border-bottom-style:solid;border-bottom-color:color-mix(in srgb,var(--bd) 70%,transparent)}
+.stars button{color:color-mix(in srgb,var(--mu) 35%,transparent)}
+.parts i{border-radius:3px 3px 0 0}
+a{color:var(--ac);text-decoration-thickness:1px;text-underline-offset:2px}
+::selection{background:color-mix(in srgb,var(--ac) 25%,transparent)}
+@media (max-width:520px){body{padding:0 12px 32px}section,details.box{padding:12px;border-radius:14px}.appbar{padding:12px 2px 10px}h1{font-size:19px}button.tab{padding:8px 12px}}
 </style>
 </head>
 <body>
-<h1>Comparador de coches <span id="sybadge" class="mu" style="font-weight:400"></span></h1>
+<header class="appbar"><img src="icons/icon-192.png" alt=""><h1>Comparador de coches</h1><span id="sybadge" class="mu"></span></header>
 
 <details class="box" id="fbox"><summary id="fsum">Filtros</summary>
 <div class="g" id="filters" style="margin-top:8px"></div>
@@ -47,7 +95,7 @@ a{color:var(--ac)}
 </details>
 
 <div class="tabs" id="tabs"></div>
-<section style="border-top-left-radius:0">
+<section>
 
 <div class="pg" id="pg-base">
 <details class="box" open><summary>Añadir desde un vídeo de YouTube</summary>
@@ -130,7 +178,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.1';
+const APP_VER='2026-11-28.2';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -241,7 +289,7 @@ const hasCurveT=c=>hasCurve(c)&&!!num(c.bat); // curva utilizable para calcular 
 function curveP(cu,s){for(let i=1;i<cu.length;i++){if(s<=cu[i][0]){const[a,pa]=cu[i-1],[b,pb]=cu[i];return pa+(pb-pa)*(s-a)/((b-a)||1)}}return cu[cu.length-1][1]}
 function curveMin(c,a,b){const cu=c.curva,E=+c.bat;let t=0;for(let s=a;s<b-1e-9;s+=1){const st=Math.min(1,b-s);t+=E*st/100/Math.max(1,curveP(cu,s+st/2))*60}return t}
 // Gráfica SVG de curvas de carga superpuestas. list: [{n, cu}]
-const CCOL=['#1d6fd6','#e8913a','#1a8a4a','#c0392b','#8e44ad','#16a085','#d35400','#7f8c8d'];
+const CCOL=['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)','var(--s6)','var(--s7)','var(--s8)'];
 function curveSvg(list,w=560,h=230){if(!list.length)return'';
  const maxP=Math.max(50,...list.flatMap(x=>x.cu.map(p=>p[1]))),stepY=maxP>300?100:50,top=Math.ceil(maxP/stepY)*stepY;
  const X=s=>42+s/100*(w-52),Y=p=>h-24-p/top*(h-38);let g='';
@@ -299,7 +347,7 @@ function completeness(c){const n=NUM.length+EQ.length;let h=0;NUM.forEach(x=>{if
 // Datos completos por apartado: [[nombre, tenidos, total], …] (apartados de datos + equipamiento)
 function compGroups(c){const g=[...new Set(NUM.map(n=>n[3]))].map(gr=>{const ks=NUM.filter(n=>n[3]===gr);return[gr,ks.filter(n=>num(c[n[0]])!=null).length,ks.length]});
  g.push(['Equipamiento',EQ.filter(e=>c.eq&&typeof c.eq[e[0]]==='boolean').length,EQ.length]);return g}
-function compHtml(c){const p=completeness(c),col=p>=75?'var(--ok)':p>=40?'var(--ac)':'#c0392b';
+function compHtml(c){const p=completeness(c),col=p>=75?'var(--ok)':p>=40?'var(--ac)':'var(--bad)';
  return `<div style="margin:8px 0"><b>Datos completos: ${p} %</b><div style="background:var(--bg);border-radius:6px;height:8px;margin:4px 0 6px"><div style="width:${p}%;height:100%;border-radius:6px;background:${col}"></div></div>`+
  `<div class="mu">${compGroups(c).map(([g,h,t])=>`<span style="white-space:nowrap;margin-right:10px">${esc(g)} <b>${h}/${t}</b></span>`).join(' ')}</div></div>`}
 function renderTable(){const L=filt();$('cnt').textContent=`${L.length} de ${S.cars.length} coches (filtros activos: ${nActive()})`;$('fsum').textContent=`Filtros (${nActive()} activos)`;
@@ -761,7 +809,7 @@ async function syncNow(){if(!syOn())return;if(syncing){syncAgain=true;return}
    if(typing){refresh();renderQ()}else renderAll();schedule(500)}
  }catch(e){setSy2('Sin sincronizar: '+(e instanceof TypeError?'sin conexión con Google, se reintenta en 1 min':(e&&e.message||e)));if(syncAgain===false)schedSync(60000)}
  finally{syncing=false;if(syncAgain){syncAgain=false;schedSync(500)}}}
-function setSy2(m){syMsg=m;const b=$('sybadge');if(b){b.textContent=syOn()?'☁ '+m:'';b.style.color=/^Sin sincronizar/.test(m)?'#c0392b':''}const s=$('systat');if(s)s.textContent=syOn()?m:'Sin configurar: los datos solo están en este navegador.'}
+function setSy2(m){syMsg=m;const b=$('sybadge');if(b){b.textContent=syOn()?'☁ '+m:'';b.style.color=/^Sin sincronizar/.test(m)?'var(--bad)':''}const s=$('systat');if(s)s.textContent=syOn()?m:'Sin configurar: los datos solo están en este navegador.'}
 function setSy(k,v){SY[k]=v;lsJs(SYK,SY);renderSy();if(k!=='proc')syncNow();schedule(0)}
 function renderSy(){if(!$('syurl'))return;$('syurl').value=SY.url;$('sytok').value=SY.tok;$('syproc').checked=!!SY.proc;setSy2(syMsg||(syOn()?'Pendiente de sincronizar':''))}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')syncNow()});
@@ -950,7 +998,7 @@ function chartCard(sp,cars){
   return `<div class="cc" style="grid-column:1/-1"><h4>${esc(sp.t)}</h4>${curveSvg(cc.map(c=>({n:nm(c),cu:c.curva})))}${cars.filter(hasCurve).length>8?'<p class="mu">Se muestran 8 coches como máximo: usa «Solo los de Comparar» para elegir cuáles.</p>':''}</div>`}const f=sp.fmt===fmtMin?fmtMinS:(sp.fmt||fmt);
  if(sp.pair){let rows=cars.map(c=>{const [a,b,e]=sp.pair(c);return{n:nm(c),c,a,b,e}}).filter(r=>r.a!=null||r.b!=null);if(!rows.length)return'';
   rows.sort((x,y)=>(x.a??x.b)-(y.a??y.b));const m=Math.max(...rows.flatMap(r=>[r.a||0,r.b||0]))||1;
-  return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t" style="display:flex;flex-direction:column;gap:2px;background:none;height:auto"><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--ac);width:${Math.max(0,100*(r.a||0)/m)}%"></span></span><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:#e8913a;width:${Math.max(0,100*(r.b||0)/m)}%"></span></span></span><span class="v ${i===0?'best':''}" style="line-height:1.15">${r.e?'≈ ':''}${r.a==null?'–':f(r.a)}<br>${r.e?'≈ ':''}${r.b==null?'–':f(r.b)}</span></div>`).join('')+'</div>'}
+  return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n)}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t" style="display:flex;flex-direction:column;gap:2px;background:none;height:auto"><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--ac);width:${Math.max(0,100*(r.a||0)/m)}%"></span></span><span style="display:block;background:var(--bg);border-radius:4px;height:9px"><span style="display:block;height:100%;border-radius:4px;background:var(--s2);width:${Math.max(0,100*(r.b||0)/m)}%"></span></span></span><span class="v ${i===0?'best':''}" style="line-height:1.15">${r.e?'≈ ':''}${r.a==null?'–':f(r.a)}<br>${r.e?'≈ ':''}${r.b==null?'–':f(r.b)}</span></div>`).join('')+'</div>'}
  let rows=cars.map(c=>({n:nm(c),c,v:sp.get(c)})).filter(r=>r.v!=null);if(!rows.length)return'';
  rows.sort((a,b)=>sp.dir==='high'?b.v-a.v:a.v-b.v);const m=Math.max(...rows.map(r=>r.v),0)||1;
  return `<div class="cc"><h4>${esc(sp.t)}</h4>`+rows.map((r,i)=>`<div class="bar"><span class="l" title="${esc(r.n+(r.c._trims?' — '+r.c._trims.join(', '):''))}">${thumb(r.c)}<span class="ln">${esc(r.n)}</span></span><span class="t"><div class="f" style="width:${Math.max(0,100*r.v/m)}%"></div></span><span class="v ${i===0&&rows.length>1?'best':''}">${f(r.v)}</span></div>`).join('')+'</div>'}
@@ -958,7 +1006,7 @@ const ENGG=['viajes','prest','consumo','carga'];
 function renderChart(){if(!$('cgrp'))return;const grp=CG.find(x=>x[0]===S.cgrp)||CG[0],raw=chartCars(),grpd=ENGG.includes(grp[0])&&S.cmech!==0,cars=grpd?mechCars(raw):raw.map(withMech);
  if(S.cmode==='comp'&&cars.length<1){$('chart').innerHTML='<p class="mu">No hay coches marcados en Comparar.</p>';$('cleg').innerHTML='';return}
  const specs=grp[2]().filter(Boolean),cards=specs.map(sp=>chartCard(sp,cars)),empty=specs.filter((sp,i)=>!cards[i]).map(sp=>sp.t);
- $('cleg').innerHTML=(grpd&&cars.length<raw.length?`${raw.length} versiones agrupadas en ${cars.length} mecánicas (mismo motor y tracción; el acabado no cuenta) · `:'')+`${cars.length} coche${cars.length===1?'':'s'} · el mejor de cada gráfica, arriba y en verde`+(specs.some(s=>s.pair)?' · <span style="color:var(--ac)">■</span> favorable <span style="color:#e8913a">■</span> desfavorable (frío y viento) · ≈ estimado':'');
+ $('cleg').innerHTML=(grpd&&cars.length<raw.length?`${raw.length} versiones agrupadas en ${cars.length} mecánicas (mismo motor y tracción; el acabado no cuenta) · `:'')+`${cars.length} coche${cars.length===1?'':'s'} · el mejor de cada gráfica, arriba y en verde`+(specs.some(s=>s.pair)?' · <span style="color:var(--ac)">■</span> favorable <span style="color:var(--s2)">■</span> desfavorable (frío y viento) · ≈ estimado':'');
  $('chart').innerHTML=(cards.join('')||'<p class="mu">Ningún coche tiene datos de este grupo todavía. Prueba «Completar ficha».</p>')+(empty.length&&cards.some(Boolean)?`<p class="mu" style="grid-column:1/-1">Sin datos todavía: ${empty.map(esc).join(' · ')}.</p>`:'')}
 
 /* ---- ajustes ---- */
