@@ -157,6 +157,15 @@ td.best{color:var(--ok);font-weight:700;background:var(--okbg)}
 .cmpchk:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
 .empty{grid-column:1/-1;text-align:center;padding:40px 16px;background:var(--card);border:1px dashed var(--bd);border-radius:14px;color:var(--mu)}
 .empty b{display:block;font:700 20px var(--fc);color:var(--tx);margin-bottom:4px}
+/* ---- base: guía para completar fichas ---- */
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:12px}
+section.gopt{margin:0;padding:14px 16px;display:flex;flex-direction:column;background:var(--card2);border-color:transparent;box-shadow:none;border-radius:10px}
+.gopt h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 4px;font:700 17px var(--fc)}
+.gopt>p.mu{margin:0 0 8px}
+.steps{margin:0 0 4px;padding-left:20px;font-size:14px;line-height:1.45}
+.steps li{margin:0 0 8px;padding-left:2px}
+.steps li::marker{font:700 14px var(--fc);color:var(--ac)}
+.gact{margin:auto 0 0;padding-top:6px;display:flex;flex-wrap:wrap;gap:8px}
 /* ---- base: listado ---- */
 details.lbox{padding:14px 8px 8px}
 .lbox>summary{padding:0 12px 2px;flex-wrap:wrap}
@@ -346,6 +355,38 @@ section .cc,details.box .cc{box-shadow:none}
 <p><button onclick="doMerge()">Fusionar en la base</button></p>
 </details>
 </details>
+<details class="box gbox" id="gbox" ontoggle="lsSet('cmp2_gbox',this.open?'':'0')"><summary>Cómo completar las fichas <span class="pill" id="gpill"></span></summary>
+<p class="mu" style="margin:0 0 12px">La barra de cada coche del listado indica qué parte de su ficha tiene datos. Puedes rellenar lo que falta de tres formas; se pueden combinar.</p>
+<div class="guide">
+<section class="gopt"><h3>Con Claude <span class="pill">Recomendado</span></h3>
+<p class="mu">Claude busca cada dato en internet (km77, EV Database, web oficial, Euro NCAP, evkx…) y apunta de dónde sale.</p>
+<ol class="steps">
+<li>Pulsa <b>Exportar para Claude</b>. Se descarga <i>coches-para-fichas.json</i> en tu carpeta de Descargas, con lo que le falta a cada coche.</li>
+<li>En Claude Code, abierto en la carpeta del comparador, escribe <b>«completa las fichas»</b>. Claude te deja un archivo <i>fichas-claude….json</i> en esa carpeta.</li>
+<li>Pulsa <b>Importar fichas de Claude</b> y elige ese archivo. Rellena los huecos, actualiza precios y datos 🧠, y añade fotos y curvas de carga. Si encuentra coches duplicados, te pregunta antes de fusionarlos.</li>
+</ol>
+<p class="gact"><button class="p" onclick="exportForClaude()">Exportar para Claude</button> <button onclick="$('fimp').click()">Importar fichas de Claude</button></p>
+</section>
+<section class="gopt"><h3>Con Gemini, automático</h3>
+<p class="mu">Gemini busca en Google desde la propia app. Necesita una clave gratuita y la cola de vídeos activa.</p>
+<ol class="steps">
+<li>Pon tu clave de Gemini en <b>Ajustes</b>. Si usas varios dispositivos, el que procesa la cola es el PC.</li>
+<li>Abre la ficha de un coche y pulsa <b>Completar ficha</b>, o completa todas a la vez con el botón de abajo. Las fichas entran en la cola de «Añadir desde vídeos de YouTube».</li>
+<li>Los coches nuevos que salen de un vídeo se completan solos si está marcada la casilla «Completar con internet la ficha de cada coche nuevo» (Ajustes → Límites de uso de la cola).</li>
+</ol>
+<p class="gact"><button onclick="queueAllFichas()">Completar todas con Gemini</button> <button onclick="goTab('set')">Ir a Ajustes</button></p>
+</section>
+<section class="gopt"><h3>A mano</h3>
+<p class="mu">Para un dato concreto que ya conoces o quieres corregir.</p>
+<ol class="steps">
+<li>Toca el coche en el listado para abrir su ficha.</li>
+<li>En <b>Datos técnicos</b> o <b>Equipamiento</b>, escribe o elige el valor. Se guarda solo al salir del campo.</li>
+<li>Debajo de las cifras de la ficha tienes enlaces que buscan ese coche en km77, EV Database, Spritmonitor y Euro NCAP.</li>
+</ol>
+</section>
+</div>
+<p class="mu" style="margin:12px 0 0">Marcas junto a cada dato: 🌐 sacado de internet, con su fuente (pasa el ratón o tócalo para verla); 🧠 dato de Gemini sin verificar, que se sustituye cuando importas fichas de Claude.</p>
+</details>
 <details class="box lbox" id="lbox" open ontoggle="lsSet('cmp2_lbox',this.open?'':'0')"><summary id="lsum">Coches</summary><div id="clist"></div></details>
 </div>
 
@@ -416,7 +457,7 @@ section .cc,details.box .cc{box-shadow:none}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.4';
+const APP_VER='2026-11-28.5';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -621,6 +662,7 @@ const photo=c=>{const u=carImg(c);return u?`<img src="${esc(u)}" alt="" loading=
 function carRow(c){const p=completeness(c);
  return `<li><button class="lrow" onclick="openEdit(${c.id})" aria-label="Abrir ficha de ${esc(nm(c))}, datos completos ${p} %"><span class="lph">${thumb(c,56,32)||'<span class="lnoph"></span>'}</span><span class="lnm"><b>${esc([c.marca,c.modelo].filter(Boolean).join(' ')||'(sin nombre)')}</b><span>${esc([c.version,c.t].filter(Boolean).join(' · '))}</span></span><span class="lpc"><span class="meter"><i style="width:${p}%;background:${compCol(p)}"></i></span><b>${p} %</b></span></button></li>`}
 function renderTable(){const q=lc(QS),L=filt().filter(c=>!q||lc(nm(c)).includes(q)).sort((a,b)=>nm(a).localeCompare(nm(b),'es',{sensitivity:'base'}));$('fsum').textContent=nActive()?`Filtros · ${nActive()}`:'Filtros';$('fbox').classList.toggle('on',nActive()>0);pageSub();
+ {const inc=S.cars.filter(c=>completeness(c)<100).length;$('gpill').textContent=S.cars.length?(inc?inc+' por completar':'Todas completas'):''}
  const avg=L.length?Math.round(L.reduce((s,c)=>s+completeness(c),0)/L.length):0;
  $('lsum').innerHTML=`Coches <span class="pill">${L.length}${q?` con «${esc(QS.trim())}»`:''}</span>${L.length?`<span class="mu lavg">Datos completos de media: ${avg} %</span>`:''}`;
  if(!S.cars.length){$('clist').innerHTML=`<div class="empty"><b>Todavía no hay coches</b>Pega un enlace de YouTube en «Añadir desde vídeos de YouTube» o añade uno a mano.</div>`;return}
@@ -1333,7 +1375,7 @@ function renderAll(){renderQ();renderFilters();renderTabs();renderSettings();ren
 S.cars.forEach(c=>{if(!c.u)c.u=1});Q.items.forEach(x=>{if(!x.u)x.u=1});
 snapAll();
 Q.items.forEach(x=>{if(x.st==='proc'&&(!x.by||x.by===DEV)){x.st='pend';x.msg='Interrumpido al cerrar la página; se reintenta'}});
-applySide();$('lbox').open=lsGet('cmp2_lbox')!=='0';save();renderAll();$('vbox').open=!S.cars.length||Q.items.some(x=>x.st==='pend'||x.st==='proc'||x.st==='err');schedule(1500);takeShared();syncNow();
+applySide();$('lbox').open=lsGet('cmp2_lbox')!=='0';$('gbox').open=lsGet('cmp2_gbox')!=='0';save();renderAll();$('vbox').open=!S.cars.length||Q.items.some(x=>x.st==='pend'||x.st==='proc'||x.st==='err');schedule(1500);takeShared();syncNow();
 if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
