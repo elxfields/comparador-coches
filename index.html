@@ -5,107 +5,306 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Comparador de coches</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#f1f1ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#eef1f4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c1117" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap">
+<script>try{const t=localStorage.getItem('cmp2_theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
-:root{--bg:#f1f1ee;--card:#fcfcfb;--card2:#f5f5f2;--tx:#161615;--mu:#5f5e5a;--bd:#e3e2dc;--ac:#2a78d6;--ok:#0a7d32;--bad:#c62f2e;
- --sh:0 1px 2px rgba(20,20,15,.05),0 8px 24px rgba(20,20,15,.05);
+/* Tokens: asfalto frío + azul de señal de autopista. Paleta por coche (--s1..--s8) validada para daltonismo: no cambiar. */
+:root{--bg:#eef1f4;--card:#fff;--card2:#f3f5f8;--tx:#0e1621;--mu:#5a6573;--bd:#dae0e6;--ac:#1f4fbf;--act:#fff;--nav:#17398a;--ok:#0a7d32;--okbg:#e3f3e8;--bad:#c62f2e;--gold:#b98200;
+ --sh:0 1px 2px rgba(14,22,33,.05);--shl:0 12px 40px rgba(14,22,33,.12);
+ --f:"Barlow","Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;--fc:"Barlow Semi Condensed","Barlow","Segoe UI",system-ui,sans-serif;
  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;color-scheme:light}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111110;--card:#1a1a19;--card2:#232321;--tx:#f0efec;--mu:#a9a89f;--bd:#30302d;--ac:#3987e5;--ok:#4cc27d;--bad:#e66767;
- --sh:0 1px 0 rgba(255,255,255,.03),0 8px 24px rgba(0,0,0,.35);
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0c1117;--card:#151b23;--card2:#1c242f;--tx:#e8edf3;--mu:#98a3b1;--bd:#29323e;--ac:#7ea6ff;--act:#0c1117;--nav:#101c38;--ok:#4cc27d;--okbg:#14301f;--bad:#e66767;--gold:#e0b44a;
+ --sh:0 1px 0 rgba(255,255,255,.02);--shl:0 12px 40px rgba(0,0,0,.5);
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#0ca30c;--s7:#9085e9;--s8:#e66767;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#111110;--card:#1a1a19;--card2:#232321;--tx:#f0efec;--mu:#a9a89f;--bd:#30302d;--ac:#3987e5;--ok:#4cc27d;--bad:#e66767;
- --sh:0 1px 0 rgba(255,255,255,.03),0 8px 24px rgba(0,0,0,.35);
+:root[data-theme="dark"]{--bg:#0c1117;--card:#151b23;--card2:#1c242f;--tx:#e8edf3;--mu:#98a3b1;--bd:#29323e;--ac:#7ea6ff;--act:#0c1117;--nav:#101c38;--ok:#4cc27d;--okbg:#14301f;--bad:#e66767;--gold:#e0b44a;
+ --sh:0 1px 0 rgba(255,255,255,.02);--shl:0 12px 40px rgba(0,0,0,.5);
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#0ca30c;--s7:#9085e9;--s8:#e66767;color-scheme:dark}
 *{box-sizing:border-box}
-html{background:var(--bg)}
-body{margin:0 auto;max-width:1320px;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",sans-serif;padding:0 16px 40px;-webkit-font-smoothing:antialiased}
-.appbar{display:flex;align-items:center;gap:12px;padding:16px 2px 12px}
-.appbar img{width:36px;height:36px;border-radius:10px;box-shadow:var(--sh)}
-.appbar #sybadge{margin-left:auto;font-size:12px;background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:3px 10px}
-.appbar #sybadge:empty{display:none}
-h1{font-size:21px;font-weight:700;letter-spacing:-.015em;margin:0}
-h2{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
-h3{font-size:11.5px;margin:18px 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.07em;font-weight:700}
-section,details.box{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
-section details.box,details.box details.box{background:var(--card2);border-color:transparent;box-shadow:none;border-radius:14px}
-details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:9px}
-details>summary::-webkit-details-marker{display:none}
-details>summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(-45deg);transition:transform .15s;margin:0 2px}
-details[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)}
-details.box>summary{font-weight:650;font-size:15px}
-.sc{overflow-x:auto;border-radius:12px}
-table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}th,td{padding:7px 10px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
-th{color:var(--mu);font-weight:650;font-size:12px}
-tr:hover>td{background:color-mix(in srgb,var(--ac) 5%,transparent)}
-input,select,button,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:7px 10px}
-input,select,textarea{transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
-input[type=number]{width:96px}input[type=text]{width:100%}input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--ac)}
-button{cursor:pointer;font-weight:550;transition:background .15s,border-color .15s,color .15s}
-:where(button:not(.tab)):hover{background:var(--card2);border-color:color-mix(in srgb,var(--ac) 40%,var(--bd))}
-:where(button):active{transform:translateY(1px)}
-:where(button):focus-visible{outline:2px solid var(--ac);outline-offset:2px}
-button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button.p:hover{background:color-mix(in srgb,var(--ac) 86%,#000);border-color:transparent}
-.tabs{position:sticky;top:6px;z-index:20;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;padding:5px;margin:0 0 14px;background:color-mix(in srgb,var(--card) 85%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--sh)}
-.tabs::-webkit-scrollbar{display:none}
-button.tab{flex:none;border:0;background:transparent;border-radius:10px;padding:8px 16px;font-weight:600;color:var(--mu);white-space:nowrap}
-button.tab:hover{background:var(--card2);color:var(--tx)}
-button.tab.on{background:var(--ac);color:#fff;box-shadow:0 1px 3px color-mix(in srgb,var(--ac) 45%,transparent)}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
-.g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:3px;font-weight:550}.g input,.g select{width:100%}
-.eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px 12px}
-.eqg label.row{flex-direction:row;align-items:center;gap:8px;color:var(--tx);font-size:13px;font-weight:400}
-.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:6px 22px}.wrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 22px;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit)}.wrow .wn{display:flex;flex-direction:column;line-height:1.2}.wrow input[type=range]{width:100%;accent-color:var(--ac);padding:0}.wrow b{text-align:right}.wsec{border:1px solid var(--bd);border-radius:8px;padding:6px 10px;margin:6px 0}.wsec summary{cursor:pointer;font-weight:600;font-size:14px}.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:0 22px;margin-top:4px}.wrow2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}.wrow2.off>span:first-child{opacity:.6}.stars{white-space:nowrap;flex:none}.stars button{background:none;border:0;padding:0 1px;margin:0;font-size:20px;line-height:1;color:var(--bd);cursor:pointer;min-width:0;box-shadow:none}.stars button.on{color:#f5b301}.stars button:hover{transform:scale(1.15)}.parts{display:flex;gap:3px;align-items:flex-end;height:22px}.parts i{display:block;width:7px;background:var(--ac);border-radius:2px 2px 0 0;opacity:.85}
-.bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:5px;min-width:0}.bar .l .ln{overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:12px;overflow-wrap:anywhere}
-.bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
-.mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:120px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:20px;padding:3px 4px;font-size:12px;max-width:100%}.chip .cn{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip button{border:none;background:none;padding:0 4px}.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:4px}.bcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac)}.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none}.logo.sm{width:34px;height:34px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:600}.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 10px}.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 8px;border-radius:12px;border-width:2px;overflow:hidden;gap:2px}.mcard.on{border-color:var(--ac)}.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}.mcard .tick{position:absolute;top:6px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}.mcard .mn,.mcard .mu{padding:0 8px}.mn{font-weight:600;margin-top:4px}@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11px}}.cmpwrap{max-height:82vh;overflow:auto;border-radius:8px}#cmp tr:first-child th{position:sticky;top:0;z-index:3;background:var(--card);box-shadow:0 1px 0 var(--bd)}#cmp tr>:first-child:not([colspan]){position:sticky;left:0;z-index:2;background:var(--card);white-space:normal;min-width:130px}#cmp tr:first-child>:first-child{z-index:4}@media (max-width:520px){#cmp th img{width:120px!important;height:68px!important}#cmp tr:first-child th{min-width:124px!important}#cmp tr>:first-child:not([colspan]){min-width:96px;max-width:112px;font-size:12px}}.pg{display:none}.pg.on{display:block}
-textarea{width:100%;height:110px;font:12px monospace}
-/* rediseño: componentes */
-.bar{margin:5px 0;gap:10px}
-.bar .t{background:var(--card2);border-radius:4px;height:14px}
-.bar .f{border-radius:0 4px 4px 0}
-.bar .v{color:var(--tx);font-variant-numeric:tabular-nums;font-size:12.5px}
-.bar .v.best,.best{color:var(--ok);font-weight:700}
-.cgrid{gap:14px}
-.cc{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;box-shadow:var(--sh)}
-section .cc,details.box .cc{box-shadow:none}
-.cc h4{font-size:13.5px;font-weight:650;margin:0 0 10px;letter-spacing:-.005em}
-.mu{color:var(--mu)}
-.chip{background:var(--card2);padding:4px 6px}
-.g label.row{flex-direction:row;align-items:center;gap:8px;color:var(--tx);font-size:13px}
-.wsec{background:var(--card);border-color:var(--bd);border-radius:12px;padding:8px 12px}
-.wrow2{border-bottom-style:solid;border-bottom-color:color-mix(in srgb,var(--bd) 70%,transparent)}
-.stars button{color:color-mix(in srgb,var(--mu) 35%,transparent)}
-.parts i{border-radius:3px 3px 0 0}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 var(--f);-webkit-font-smoothing:antialiased}
+body.noscroll{overflow:hidden}
 a{color:var(--ac);text-decoration-thickness:1px;text-underline-offset:2px}
 ::selection{background:color-mix(in srgb,var(--ac) 25%,transparent)}
-@media (max-width:520px){body{padding:0 12px 32px}section,details.box{padding:12px;border-radius:14px}.appbar{padding:12px 2px 10px}h1{font-size:19px}button.tab{padding:8px 12px}}
+h1,h2,h4{font-family:var(--fc);letter-spacing:-.005em}
+h1{font-size:34px;line-height:1.05;font-weight:700;margin:0}
+h2{font-size:21px;line-height:1.15;font-weight:700;margin:0 0 12px}
+h3{font-size:14px;font-weight:700;margin:20px 0 8px;color:var(--tx)}
+/* ---- estructura: menú lateral (ordenador) / barra inferior (móvil) ---- */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:4px;padding:22px 14px 18px;background:var(--nav);color:#fff;z-index:30}
+.brand{display:flex;align-items:center;gap:11px;padding:0 8px 22px;font:700 18px/1.05 var(--fc)}
+.brand img{width:36px;height:36px;border-radius:9px;flex:none}
+.brand small{display:block;font:500 14px/1.2 var(--f);opacity:.72}
+.navl{display:flex;flex-direction:column;gap:3px}
+button.nav{display:flex;align-items:center;gap:12px;width:100%;min-height:44px;border:0;background:transparent;color:rgba(255,255,255,.8);padding:9px 12px;border-radius:10px;font:600 15.5px var(--f);text-align:left}
+button.nav svg{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+button.nav:hover{background:rgba(255,255,255,.1);color:#fff}
+button.nav.on{background:#fff;color:#17398a}
+button.nav:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.sidenote{margin-top:auto;padding:0 10px;font-size:12.5px;color:rgba(255,255,255,.62)}
+.main{min-width:0;width:100%;max-width:1320px;padding:30px 36px 72px}
+.phead{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;margin:0 0 20px}
+#psub{margin:5px 0 0;color:var(--mu);font-size:14.5px}
+.pact{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#sybadge{font-size:12.5px;color:var(--mu);background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:4px 11px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#sybadge:empty{display:none}
+.pg{display:none}.pg.on{display:block}
+body[data-tab="set"] #fbox{display:none}
+@media (max-width:860px){
+ .app{display:block}
+ .side{position:fixed;top:auto;left:0;right:0;bottom:0;height:auto;flex-direction:row;padding:5px 4px calc(5px + env(safe-area-inset-bottom));background:color-mix(in srgb,var(--card) 94%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border-top:1px solid var(--bd);color:var(--tx)}
+ .brand,.sidenote{display:none}
+ .navl{flex-direction:row;width:100%;gap:0}
+ button.nav{flex:1;min-width:0;flex-direction:column;justify-content:center;gap:2px;padding:4px 0;min-height:54px;font-size:11.5px;font-weight:600;color:var(--mu);text-align:center;border-radius:12px}
+ button.nav svg{width:54px;height:28px;padding:3px 15px;border-radius:999px}
+ button.nav:hover{background:transparent;color:var(--tx)}
+ button.nav.on{background:transparent;color:var(--ac)}
+ button.nav.on svg{background:color-mix(in srgb,var(--ac) 15%,transparent)}
+ button.nav:focus-visible{outline-color:var(--ac)}
+ .main{padding:18px 16px calc(92px + env(safe-area-inset-bottom))}
+ h1{font-size:29px}
+ #sybadge{max-width:100%}
+}
+/* ---- superficies ---- */
+section,details.box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px 20px;margin-bottom:16px;box-shadow:var(--sh)}
+section details.box,details.box details.box{background:var(--card2);border-color:transparent;box-shadow:none;border-radius:10px;padding:12px 14px}
+details>summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px}
+details>summary::-webkit-details-marker{display:none}
+details>summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(-45deg);transition:transform .15s;margin:0 3px}
+details[open]>summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+details.box>summary{font:700 17px/1.2 var(--fc);min-height:24px}
+details.box[open]>summary{margin-bottom:10px}
+.pill{display:inline-flex;align-items:center;font:600 12px/1 var(--f);padding:4px 8px;border-radius:999px;background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac)}
+.pill:empty{display:none}
+.notice{background:color-mix(in srgb,var(--ac) 9%,var(--card));border:1px solid color-mix(in srgb,var(--ac) 30%,var(--bd));border-radius:10px;padding:10px 14px;margin:0 0 14px;font-size:13.5px;color:var(--tx)}
+.notice{display:flex;align-items:flex-start;gap:10px;padding-right:6px}.notice>div{flex:1;min-width:0;padding-top:2px}.notice>button{min-height:30px;padding:2px 10px;color:var(--mu)}
+.notice:has(#mlog:empty){display:none}
+.menupop.fpop{width:min(760px,calc(100vw - 32px));max-height:min(70vh,640px);overflow:auto;padding:16px 18px}
+.fpop h3:first-of-type{margin-top:16px}
+#fbox>summary{background:var(--card)}
+@media (max-width:860px){.menupop.fpop{position:fixed;left:12px;right:12px;top:auto;bottom:calc(74px + env(safe-area-inset-bottom));width:auto;max-height:68vh}.fpop .g{grid-template-columns:1fr 1fr}}
+#fbox.on>summary{border-color:var(--ac);color:var(--ac)}
+/* ---- controles ---- */
+input,select,button,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 10px}
+input,select,textarea{transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 22%,transparent)}
+input[type=number]{width:96px}input[type=text],input[type=search],input[type=password]{width:100%}input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--ac)}
+button,.btn{cursor:pointer;font-weight:600;min-height:36px;padding:7px 14px;transition:background .15s,border-color .15s,color .15s}
+:where(button:not(.nav)):hover{background:var(--card2);border-color:color-mix(in srgb,var(--ac) 40%,var(--bd))}
+:where(button):active{transform:translateY(1px)}
+:where(button,summary,a,[tabindex]):focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+button.p{background:var(--ac);color:var(--act);border-color:var(--ac)}button.p:hover{background:color-mix(in srgb,var(--ac) 86%,#000);border-color:transparent}
+button.danger{color:var(--bad)}button.danger:hover{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,transparent)}
+button.ghost{border-color:transparent;background:transparent}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(170px,100%),1fr));gap:12px}
+.g label,.eqg label{display:flex;flex-direction:column;font-size:12.5px;color:var(--mu);gap:4px;font-weight:600}.g input,.g select{width:100%}.g input[type=checkbox]{width:auto;flex:none}
+.eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:6px 14px}
+.eqg label.row,.g label.row{flex-direction:row;align-items:center;gap:8px;color:var(--tx);font-size:14px;font-weight:500}
+textarea{width:100%;height:110px;font:12px ui-monospace,Consolas,monospace}
+.mu{color:var(--mu);font-size:13px}
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--card2);border:1px solid var(--bd);border-radius:10px}
+.seg button{border:0;background:transparent;min-height:32px;padding:5px 13px;border-radius:7px;color:var(--mu);font-weight:600}
+.seg button:hover{background:transparent;color:var(--tx)}
+.seg button.on{background:var(--card);color:var(--tx);box-shadow:0 1px 2px rgba(14,22,33,.12)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}
+.search{flex:1 1 200px;position:relative;display:block}
+.search svg{position:absolute;left:11px;top:50%;width:17px;height:17px;transform:translateY(-50%);fill:none;stroke:var(--mu);stroke-width:2;stroke-linecap:round;pointer-events:none}
+.search input{padding-left:36px;min-height:40px;border-radius:10px}
+.menu{position:relative}
+.menu>summary{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:7px 14px;border:1px solid var(--bd);border-radius:8px;background:var(--card);font-weight:600}
+.menu>summary::before{display:none}
+.menu>summary::after{content:"";width:6px;height:6px;border-right:2px solid var(--mu);border-bottom:2px solid var(--mu);transform:rotate(45deg) translateY(-2px)}
+.menupop{position:absolute;right:0;top:calc(100% + 6px);z-index:25;width:min(330px,calc(100vw - 32px));background:var(--card);border:1px solid var(--bd);border-radius:12px;box-shadow:var(--shl);padding:6px;display:flex;flex-direction:column;gap:2px}
+.menupop button{border:0;background:transparent;text-align:left;border-radius:8px;font-weight:500}
+.menupop p{margin:6px 10px 4px}
+/* ---- tablas ---- */
+.sc{overflow-x:auto;border-radius:12px}
+#tblw,#cmptbl{background:var(--card);border:1px solid var(--bd);box-shadow:var(--sh)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}th,td{padding:8px 11px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{color:var(--mu);font-weight:600;font-size:12.5px}
+tr:hover>td{background:color-mix(in srgb,var(--ac) 4%,transparent)}
+td.best{color:var(--ok);font-weight:700;background:var(--okbg)}
+.best{color:var(--ok);font-weight:700}
+/* ---- base de datos: tarjetas ---- */
+.cars{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(268px,100%),1fr));gap:16px}
+.car{display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.car.sel{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.carph{position:relative;display:block;aspect-ratio:16/9;background:var(--card2);cursor:pointer;overflow:hidden}
+.carph img{width:100%;height:100%;object-fit:cover;display:block}
+.noph{display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:var(--mu)}
+.noph svg{width:64px;height:64px;opacity:.45;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.tbadge{position:absolute;left:10px;top:10px;font:600 12px/1 var(--f);padding:5px 8px;border-radius:6px;background:rgba(10,16,26,.74);color:#fff}
+.carbd{padding:12px 14px 14px;min-width:0}
+.carnm{display:block;width:100%;border:0;background:none;padding:0;min-height:0;text-align:left;font-weight:400}
+.carnm:hover{background:none}
+.carnm .mk{display:block;font-size:13px;font-weight:600;color:var(--mu)}
+.carnm b{display:block;font:700 21px/1.12 var(--fc);color:var(--tx)}
+.carnm .vr{display:block;font-size:13.5px;color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kfs{display:grid;grid-template-columns:1fr 1fr;gap:10px 14px;margin:14px 0 0}
+.kfs dt{font-size:12.5px;color:var(--mu)}
+.kfs dd{margin:0;font:600 22px/1.1 var(--fc);font-variant-numeric:tabular-nums;white-space:nowrap}
+.kfs dd small,.hnum dd small{font:500 13px var(--f);color:var(--mu);margin-left:3px}
+.kfs dd.na{color:var(--mu);font-weight:500}
+.carft{display:flex;align-items:center;gap:10px;margin-top:auto;padding:10px 14px;border-top:1px solid var(--bd)}
+.meter{flex:1;height:5px;border-radius:3px;background:var(--card2);overflow:hidden}
+.meter i{display:block;height:100%;border-radius:3px}
+.cmpchk{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:4px 12px;border:1px solid var(--bd);border-radius:999px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+.cmpchk:has(input:checked){background:var(--ac);border-color:var(--ac);color:var(--act)}
+.cmpchk:has(input:focus-visible){outline:2px solid var(--ac);outline-offset:2px}
+.empty{grid-column:1/-1;text-align:center;padding:40px 16px;background:var(--card);border:1px dashed var(--bd);border-radius:14px;color:var(--mu)}
+.empty b{display:block;font:700 20px var(--fc);color:var(--tx);margin-bottom:4px}
+/* ---- ficha (panel lateral) ---- */
+#edit{display:none}
+#edit.on{display:block;position:fixed;inset:0;z-index:60}
+.scrim{position:absolute;inset:0;background:rgba(8,12,20,.5)}
+.sheet{position:absolute;top:0;right:0;bottom:0;width:min(1000px,100%);display:flex;flex-direction:column;background:var(--bg);box-shadow:var(--shl);animation:shin .2s ease-out}
+@keyframes shin{from{transform:translateX(40px)}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+.shbar{display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:calc(10px + env(safe-area-inset-top));background:var(--card);border-bottom:1px solid var(--bd)}
+.shbar .t{flex:1;min-width:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shscroll{flex:1;overflow:auto;padding:24px 28px 48px;overscroll-behavior:contain}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:start}
+.heroph{aspect-ratio:16/10;border-radius:12px;overflow:hidden;background:var(--card2)}
+.heroph img{width:100%;height:100%;object-fit:cover;display:block}
+.herotx .mk{font-weight:600;color:var(--mu)}
+.herotx h2{font-size:34px;line-height:1.04;margin:2px 0 0}
+.herotx h2 span{display:block;font:500 18px/1.3 var(--f);color:var(--mu);margin-top:6px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.tag{font-size:12.5px;font-weight:600;padding:4px 9px;border-radius:6px;background:var(--card);border:1px solid var(--bd)}
+.hnum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:18px 0 6px;border-top:1px solid var(--bd)}
+.hnum div{padding:11px 10px 11px 0;border-bottom:1px solid var(--bd)}
+.hnum div:not(:nth-child(3n+1)){padding-left:14px;border-left:1px solid var(--bd)}
+.hnum dt{font-size:12.5px;color:var(--mu)}
+.hnum dd{margin:2px 0 0;font:700 27px/1.05 var(--fc);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hnum dd.na{color:var(--mu);font-weight:500}
+.comp{margin:14px 0}
+.comp .meter{height:7px;margin:6px 0 8px}
+.etabs{margin:26px 0 16px;display:flex;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.etab section{padding:16px 18px}
+.etab section h3:first-child{margin-top:0}
+@media (max-width:560px){.shbar .t{visibility:hidden}}
+@media (max-width:760px){.hero{grid-template-columns:1fr;gap:16px}.shscroll{padding:16px 16px 40px}.herotx h2{font-size:29px}.hnum dd{font-size:23px}.hnum div:not(:nth-child(3n+1)){padding-left:10px}}
+/* ---- comparar ---- */
+.bar{display:flex;align-items:center;gap:10px;margin:5px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:6px;min-width:0}.bar .l .ln{overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:12.5px;overflow-wrap:anywhere}
+.bar .t{flex:1;background:var(--card2);border-radius:4px;height:14px}.bar .f{height:100%;border-radius:0 4px 4px 0;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--tx);font-variant-numeric:tabular-nums;font-size:13px;white-space:nowrap}
+.bar .v.best{color:var(--ok);font-weight:700}
+@media (max-width:520px){.bar .l{width:112px}.bar .v{width:70px}}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px}
+.cc{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;min-width:0;box-shadow:var(--sh)}
+section .cc,details.box .cc{box-shadow:none}
+.cc h4{font-size:16px;font-weight:700;margin:0 0 10px}
+.tray{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 12px}
+.chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--bd);background:var(--card2);border-radius:999px;padding:4px 4px 4px 6px;font-size:13px;max-width:100%}
+.chip .cn{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}.chip button{border:none;background:none;padding:0 10px;min-height:36px;min-width:36px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:10px;margin-top:4px}
+.bcard{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac)}
+.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none;border:1px solid #e6e9ee}.logo.sm{width:36px;height:36px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:700}
+.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:12px}
+.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 10px;border-radius:12px;border-width:1px;overflow:hidden;gap:2px;font-weight:400}.mcard.on{border-color:var(--ac);box-shadow:0 0 0 2px var(--ac)}
+.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card2)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}
+.mcard .tick{position:absolute;top:7px;right:7px;background:var(--ac);color:var(--act);border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.mcard .mn,.mcard .mu{padding:0 10px}.mn{font:700 16px/1.15 var(--fc);margin-top:6px}
+@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11.5px}}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:12px;margin:0 0 16px}
+.sb{position:relative;display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--bd);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.sb .sbph{aspect-ratio:16/9;background:var(--card2);border-bottom:4px solid}
+.sb .sbph img{width:100%;height:100%;object-fit:cover;display:block}
+.sb .sbb{padding:10px 12px 12px}
+.sb .sbn{font-weight:600;font-size:13.5px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.5em}
+.sb .sbw{font:700 30px/1 var(--fc);margin-top:8px}
+.sb .sbw small{font:500 13px var(--f);color:var(--mu);margin-left:5px}
+.sb.lead{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.sb .crown{position:absolute;top:8px;right:8px;font:700 12px/1 var(--f);background:var(--ok);color:#fff;padding:5px 8px;border-radius:6px}
+.cmpwrap{max-height:82vh;overflow:auto}
+.cc .mu>span,#cmpcharts .mu>span,.cgrid .mu>span{white-space:normal!important;display:inline-block;max-width:100%}
+@media (max-width:560px){.board{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sb .sbw{font-size:26px}.sb .sbw small{display:block;margin:2px 0 0}.sb .crown{font-size:11px;padding:4px 6px;top:6px;right:6px}.sb .crown{white-space:nowrap}}
+#cmp tr:first-child th{position:sticky;top:0;z-index:3;background:var(--card);box-shadow:0 1px 0 var(--bd)}
+#cmp tr>:first-child:not([colspan]){position:sticky;left:0;z-index:2;background:var(--card);white-space:normal;min-width:150px;color:var(--mu)}
+#cmp tr:first-child>:first-child{z-index:4}
+#cmp th[colspan]{background:var(--card2);color:var(--tx);font:700 15px var(--fc);padding-top:12px}
+#cmp td{min-width:120px}
+@media (max-width:520px){#cmp th img{width:120px!important;height:68px!important}#cmp tr:first-child th{min-width:124px!important}#cmp tr>:first-child:not([colspan]){min-width:96px;max-width:112px;font-size:12px}}
+/* ---- ranking ---- */
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:end;margin:0 0 18px}
+.pod{display:flex;flex-direction:column;align-items:stretch;min-width:0;padding:0;text-align:left;font-weight:400;background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+.pod.p1{order:2;border:2px solid var(--gold)}.pod.p2{order:1}.pod.p3{order:3}
+.pod .podph{display:block;aspect-ratio:16/9;background:var(--card2)}
+.pod.p1 .podph{aspect-ratio:16/10}
+.pod .podph img{width:100%;height:100%;object-fit:cover;display:block}
+.pod .podb{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"pos sc" "nm nm";align-items:end;gap:6px 12px;padding:12px 14px 14px}
+.pod .pos{grid-area:pos;font:700 36px/1 var(--fc);color:var(--mu)}
+.pod .pnm{grid-area:nm}.pod .psc{grid-area:sc}
+.pod.p1 .pos{color:var(--gold)}
+.pod .pnm{min-width:0;font-weight:600;font-size:14px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pod .psc{font:700 28px/1 var(--fc);text-align:right}
+.pod .psc small{font:500 12.5px var(--f);color:var(--mu);margin-left:4px}
+.rlist{list-style:none;margin:0 0 16px;padding:0;background:var(--card);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+.rrow{display:grid;grid-template-columns:34px 64px minmax(0,1fr) minmax(120px,200px) 70px;align-items:center;gap:14px;padding:10px 16px;border-bottom:1px solid var(--bd)}
+.rrow:last-child{border-bottom:0}
+.rrow .rn{font:700 19px var(--fc);color:var(--mu);text-align:right}
+.rrow .rph img,.rrow .rph span{width:64px!important;height:36px!important}
+.rnm{display:block;min-width:0;border:0;background:none;padding:0;min-height:0;text-align:left;font-weight:600}
+.rnm:hover{background:none;color:var(--ac)}
+.rnm span{display:block;font-size:12.5px;font-weight:400;color:var(--mu)}
+.rsc{display:flex;align-items:center;gap:10px}.rsc .t{flex:1;height:6px;border-radius:3px;background:var(--card2);overflow:hidden}.rsc .f{height:100%;background:var(--ac);border-radius:3px}
+.rsc b{font:700 18px var(--fc);min-width:38px;text-align:right;font-variant-numeric:tabular-nums}
+.parts{display:flex;gap:3px;align-items:flex-end;height:22px}.parts i{display:block;width:7px;background:var(--ac);border-radius:3px 3px 0 0;opacity:.85}
+@media (max-width:640px){.podium{grid-template-columns:1fr;gap:10px}.pod.p1,.pod.p2,.pod.p3{order:0}.pod:not(.p1) .podph{display:none}
+ .rrow{grid-template-columns:24px 52px minmax(0,1fr) 46px;gap:10px;padding:10px 12px}.rrow .rph img,.rrow .rph span{width:52px!important;height:30px!important}.rbar{display:none}}
+/* ---- pesos ---- */
+.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:6px 22px}.wrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 22px;align-items:center;gap:8px;font-size:13.5px}.wrow .wn{display:flex;flex-direction:column;line-height:1.2}.wrow input[type=range]{width:100%;accent-color:var(--ac);padding:0;border:0}.wrow b{text-align:right}
+.wsec{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;margin:6px 0}.wsec summary{cursor:pointer;font-weight:600;font-size:14.5px}
+.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:0 22px;margin-top:4px}
+.wrow2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13.5px;padding:3px 0;border-bottom:1px solid color-mix(in srgb,var(--bd) 70%,transparent)}.wrow2.off>span:first-child{opacity:.6}
+.stars{white-space:nowrap;flex:none}.stars button{background:none;border:0;padding:0 2px;margin:0;min-height:30px;font-size:21px;line-height:1;color:color-mix(in srgb,var(--mu) 35%,transparent);cursor:pointer;min-width:0;box-shadow:none}.stars button.on{color:#f5b301}.stars button:hover{transform:scale(1.15);background:none}
+/* ---- ajustes ---- */
+.setgrid{columns:2 460px;column-gap:16px}
+.setgrid section{break-inside:avoid;display:inline-block;width:100%}
 </style>
 </head>
 <body>
-<header class="appbar"><img src="icons/icon-192.png" alt=""><h1>Comparador de coches</h1><span id="sybadge" class="mu"></span></header>
-
-<details class="box" id="fbox"><summary id="fsum">Filtros</summary>
-<div class="g" id="filters" style="margin-top:8px"></div>
+<div class="app">
+<nav class="side" aria-label="Secciones">
+ <div class="brand"><img src="icons/icon-192.png" alt=""><span>Comparador<small>de coches</small></span></div>
+ <div class="navl" id="tabs"></div>
+ <div class="sidenote" id="sidever"></div>
+</nav>
+<main class="main">
+<header class="phead"><div><h1 id="ptitle">Comparador de coches</h1><p id="psub"></p></div><div class="pact"><span id="sybadge"></span>
+<details class="menu" id="fbox"><summary id="fsum">Filtros</summary><div class="menupop fpop">
+<div class="g" id="filters"></div>
 <h3>Tipo de motor</h3><div id="ftipo" class="eqg"></div>
 <h3>Equipamiento imprescindible</h3><div id="feq" class="eqg"></div>
-<p class="mu">Un coche sin el dato de un filtro activo queda excluido. <button onclick="S.f={t:[],eq:[]};save();renderAll()">Quitar filtros</button></p>
-</details>
-
-<div class="tabs" id="tabs"></div>
-<section>
+<p class="mu">Un coche sin el dato de un filtro activo queda excluido.</p>
+<p><button onclick="S.f={t:[],eq:[]};save();renderAll()">Quitar filtros</button> <button class="p" onclick="$('fbox').open=false">Ver resultados</button></p>
+</div></details></div></header>
 
 <div class="pg" id="pg-base">
-<details class="box" open><summary>Añadir desde un vídeo de YouTube</summary>
-<p class="mu" style="margin:8px 0">Pega uno o varios enlaces (uno por línea): se añaden a la cola y se procesan por detrás, de uno en uno, respetando los límites de uso que pongas en Ajustes. Los datos se fusionan solos en la base. La cola avanza mientras esta página esté abierta; si la cierras, sigue donde se quedó al volver a abrirla.</p>
+<div class="toolbar">
+ <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input type="search" id="qs" placeholder="Buscar marca, modelo o versión" aria-label="Buscar coche" oninput="QS=this.value;renderTable()"></label>
+ <div class="seg" id="viewseg" role="group" aria-label="Vista"></div>
+ <details class="menu" id="moremenu"><summary>Más acciones</summary><div class="menupop">
+  <button onclick="closeMenu();addCar()">Añadir coche a mano</button>
+  <button onclick="closeMenu();queueAllFichas()">Completar todas las fichas con Gemini</button>
+  <button onclick="closeMenu();exportForClaude()">Exportar para Claude</button>
+  <button onclick="closeMenu();$('fimp').click()">Importar fichas de Claude</button>
+  <p class="mu">Claude busca los datos en internet desde tu sesión de Claude Code y te devuelve un archivo para importar.</p>
+ </div></details>
+ <input type="file" id="fimp" accept=".json,application/json" style="display:none" onchange="importFichasFile(this.files[0]);this.value=''">
+</div>
+<div class="notice" id="mlogw"><div id="mlog" role="status"></div><button class="ghost" onclick="$('mlog').textContent=''" aria-label="Cerrar aviso">✕</button></div>
+<details class="box" id="vbox"><summary>Añadir desde vídeos de YouTube <span id="qbadge" class="pill"></span></summary>
+<p class="mu" style="margin:0 0 10px">Pega uno o varios enlaces (uno por línea): se añaden a la cola y se procesan por detrás, de uno en uno, respetando los límites de uso que pongas en Ajustes. Los datos se fusionan solos en la base. La cola avanza mientras esta página esté abierta; si la cierras, sigue donde se quedó al volver a abrirla.</p>
 <div class="g"><label>Enlaces de YouTube<textarea id="vurl" style="height:58px" placeholder="https://youtube.com/watch?v=..." onpaste="setTimeout(addFromBox,0)"></textarea></label><label>Canal / medio (opcional)<input type="text" id="vcan"></label></div>
 <p><button class="p" onclick="addFromBox()">Añadir a la cola</button> <button id="qtog" onclick="toggleQ()">Pausar cola</button> <button onclick="clearDone()">Quitar terminados</button> <button onclick="retryAll()">Reintentar ya</button></p>
 <p class="mu" id="qstat"></p>
 <div class="sc"><table id="qtbl"></table></div>
-<div id="mlog" class="mu"></div>
-<details style="margin-top:10px"><summary class="mu">Modo manual (sin clave de API)</summary>
+<details style="margin-top:12px"><summary class="mu">Modo manual (sin clave de API)</summary>
 <ol class="mu" style="margin:8px 0">
 <li>Pega el enlace aquí debajo y pulsa «Copiar prompt».</li>
 <li>Pégalo en Gemini: devolverá un JSON.</li>
@@ -118,37 +317,42 @@ a{color:var(--ac);text-decoration-thickness:1px;text-underline-offset:2px}
 </details>
 </details>
 <p class="mu" id="cnt"></p>
-<div class="sc"><table id="tbl"></table></div>
-<p><button onclick="addCar()">+ Añadir coche a mano</button> <button onclick="queueAllFichas()">🌐 Completar todas las fichas</button></p>
-<p><button onclick="exportForClaude()">📤 Exportar para Claude</button> <button onclick="$('fimp').click()">📥 Importar fichas de Claude</button><input type="file" id="fimp" accept=".json,application/json" style="display:none" onchange="importFichasFile(this.files[0]);this.value=''"> <span class="mu">Claude busca los datos en internet desde tu sesión de Claude Code y te devuelve un archivo para importar.</span></p>
-<div id="edit"></div>
+<div id="cards" class="cars"></div>
+<div class="sc" id="tblw"><table id="tbl"></table></div>
 </div>
 
 <div class="pg" id="pg-comp">
 <details class="box" open id="pickbox"><summary id="picksum">Elige coches para comparar</summary>
 <div id="pick"></div>
 </details>
-<div id="cmpcharts"></div><p class="mu">En verde, el mejor valor de cada fila.</p><div class="sc cmpwrap"><table id="cmp"></table></div></div>
+<div id="cmpsum"></div>
+<div id="cmpcharts"></div>
+<div id="cmptblbox"><h2 style="margin-top:6px">Ficha comparada</h2><p class="mu" style="margin:-6px 0 10px">Fondo verde: el mejor valor de cada fila.</p><div class="sc cmpwrap" id="cmptbl"><table id="cmp"></table></div></div>
+</div>
 
 <div class="pg" id="pg-rank">
-<p class="mu">Se puntúan los coches que pasan los filtros. Cada parámetro numérico se normaliza entre el peor y el mejor de ese grupo; un dato que falta se ignora. En equipamiento, lo que falta o es «No» suma 0. Cada apartado da su nota (0-100) y la puntuación final es la media de los apartados según su importancia.</p>
-<div class="sc"><table id="rank"></table></div>
-<details class="box" style="margin-top:12px" open><summary>Pesos del ranking</summary><div id="wts" style="margin-top:8px"></div></details>
+<div id="rank"></div>
+<details class="box" open><summary>Pesos del ranking</summary><div id="wts"></div></details>
+<details class="box"><summary>Cómo se calcula la puntuación</summary><p class="mu" style="margin:0">Se puntúan los coches que pasan los filtros. Cada parámetro numérico se normaliza entre el peor y el mejor de ese grupo; un dato que falta se ignora. En equipamiento, lo que falta o es «No» suma 0. Cada apartado da su nota (0-100) y la puntuación final es la media de los apartados según su importancia.</p></details>
 </div>
 
 <div class="pg" id="pg-chart">
-<div class="g"><label>Grupo de datos<select id="cgrp" onchange="S.cgrp=this.value;save();renderChart()"></select></label><label>Coches<select id="cmode" onchange="S.cmode=this.value;save();renderChart()"><option value="all">Todos (con los filtros)</option><option value="comp">Solo los de Comparar</option></select></label><label class="row" style="align-self:end"><input type="checkbox" id="cmech" onchange="S.cmech=this.checked?1:0;save();renderChart()"> Agrupar acabados con la misma mecánica (motor y tracción)</label></div>
-<p class="mu" id="cleg"></p>
+<section><div class="g"><label>Grupo de datos<select id="cgrp" onchange="S.cgrp=this.value;save();renderChart()"></select></label><label>Coches<select id="cmode" onchange="S.cmode=this.value;save();renderChart()"><option value="all">Todos (con los filtros)</option><option value="comp">Solo los de Comparar</option></select></label><label class="row" style="align-self:end"><input type="checkbox" id="cmech" onchange="S.cmech=this.checked?1:0;save();renderChart()"> Agrupar acabados con la misma mecánica (motor y tracción)</label></div>
+<p class="mu" id="cleg" style="margin:12px 0 0"></p></section>
 <div id="chart" class="cgrid"></div></div>
 
-<div class="pg" id="pg-set">
-<h2>Sincronización con Google</h2>
+<div class="pg" id="pg-set"><div class="setgrid">
+<section><h2>Sincronización con Google</h2>
 <div class="g"><label>URL del script (termina en /exec)<input type="text" id="syurl" autocomplete="off" onchange="setSy('url',this.value.trim())"></label><label>Clave del script<input type="password" id="sytok" autocomplete="off" onchange="setSy('tok',this.value.trim())"></label></div>
-<p><label class="row" style="display:flex;align-items:center;gap:6px;font-size:13px"><input type="checkbox" id="syproc" onchange="setSy('proc',this.checked)">Este dispositivo procesa la cola de vídeos (márcalo solo en el PC)</label></p>
+<p><label class="row" style="display:flex;align-items:center;gap:8px;font-size:14px"><input type="checkbox" id="syproc" onchange="setSy('proc',this.checked)">Este dispositivo procesa la cola de vídeos (márcalo solo en el PC)</label></p>
 <p class="mu" id="systat"></p>
-<p><button onclick="syncNow()">Sincronizar ahora</button></p>
+<p><button class="p" onclick="syncNow()">Sincronizar ahora</button></p>
 <p class="mu">Coches, ajustes (precios, viajes, pesos) y la cola de vídeos se comparten entre tus dispositivos a través del script de tu cuenta de Google. La URL y la clave se guardan solo en este dispositivo y no se exportan. Filtros, selección para comparar y la clave de Gemini son de cada dispositivo.</p>
-<h2 style="margin-top:14px">Gemini (extracción automática)</h2>
+</section>
+<section><h2>Apariencia</h2>
+<div class="g"><label>Tema<select id="theme" onchange="setTheme(this.value)"><option value="">Automático (como el sistema)</option><option value="light">Claro</option><option value="dark">Oscuro</option></select></label></div>
+</section>
+<section><h2>Gemini (extracción automática)</h2>
 <div class="g"><label>Clave API de Gemini<input type="password" id="gkey" autocomplete="off" onchange="lsSet(GK,this.value.trim());lsSet(GFC,'');keyHint();fbHint();qMsg='';schedule(0)"></label><label>Modelo<input type="text" id="gmodel" onchange="lsSet(GM,this.value.trim());this.value=model();fbHint()"></label><label>Modelos de respaldo (vacío = automático)<input type="text" id="gfall" placeholder="se eligen solos" onchange="lsSet(GF,this.value.trim());lsSet(GFC,'');fbHint()"></label></div>
 <p class="mu" id="gfhint"></p>
 <div class="g"><label>Búsqueda web en «Completar ficha»<select id="gsmode" onchange="setGs(this.value)"><option value="auto">Automática</option><option value="si">Siempre</option><option value="no">Nunca</option></select></label></div>
@@ -159,26 +363,32 @@ a{color:var(--ac);text-decoration-thickness:1px;text-underline-offset:2px}
 <div class="g" id="lims"></div>
 <p class="mu" id="limhint"></p>
 <p class="mu">Cómo se ahorra: antes de cada vídeo se consulta su tamaño en tokens (esa consulta es gratuita) y se salta si supera el máximo por vídeo o no cabe en el presupuesto del día. El vídeo se analiza a baja resolución y con pocos fotogramas por segundo, porque los datos salen sobre todo de lo que se dice. Si Google responde que se ha superado su límite, la cola espera lo que indique y reintenta sola. El contador diario es de este navegador y se reinicia a medianoche (la cuota de Google se reinicia a las 9:00, hora peninsular).</p>
-<h2 style="margin-top:14px">Precios de energía</h2><div class="g" id="prices"></div>
-<h2 style="margin-top:14px">Viajes tipo</h2>
+</section>
+<section><h2>Precios de energía</h2><div class="g" id="prices"></div></section>
+<section><h2>Viajes tipo</h2>
 <div class="sc"><table id="trips"></table></div>
 <p class="mu">% carretera: parte de la energía eléctrica cargada en público (el resto, en casa). El viaje «mixto» (el segundo) define el coste por 100 km. En híbridos enchufables, primero se usa la autonomía eléctrica y el resto es combustible.</p>
-<h2 style="margin-top:14px">Rutas largas (al estilo ABRP)</h2>
+</section>
+<section><h2>Rutas largas (al estilo ABRP)</h2>
 <div class="sc"><table id="routes"></table></div>
-<p><button onclick="S.routes.push({n:'Nueva ruta',km:300,h:3});save();renderAll()">+ Añadir ruta</button></p>
+<p><button onclick="S.routes.push({n:'Nueva ruta',km:300,h:3});save();renderAll()">Añadir ruta</button></p>
 <div class="g" id="rparams"></div>
 <p class="mu">Los km y las horas de conducción son aproximados: ajústalos con Google Maps a tu ruta habitual. En los eléctricos se sale con la carga indicada, se para cuando la batería baja al mínimo y se carga hasta el máximo (en la última parada, solo lo necesario para llegar con el mínimo). «Favorable» usa el consumo real en autopista con clima templado; «desfavorable», el consumo con frío multiplicado por el viento en contra, y la carga es más lenta. El coste supone que sales cargado en casa y el resto lo cargas en la carretera.</p>
-<h2 style="margin-top:14px">Datos</h2>
+</section>
+<section><h2>Datos</h2>
 <p class="mu">Versión de la app: <span id="appver"></span> (se actualiza sola cuando hay una nueva).</p>
 <p class="mu">Se guardan en este navegador. Exporta el JSON como copia de seguridad o para llevarlo a otro dispositivo.</p>
 <textarea id="io"></textarea>
-<p><button onclick="exp()">Exportar</button> <button onclick="imp()">Importar (reemplaza todo)</button> <button onclick="if(confirm('¿Borrar toda la base?')){S=def();save();renderAll()}">Reiniciar</button></p>
-</div>
+<p><button onclick="exp()">Exportar</button> <button onclick="imp()">Importar (reemplaza todo)</button> <button class="danger" onclick="if(confirm('¿Borrar toda la base?')){S=def();save();renderAll()}">Reiniciar</button></p>
 </section>
+</div></div>
+</main>
+</div>
+<div id="edit"></div>
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.2';
+const APP_VER='2026-11-28.3';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -201,7 +411,12 @@ const EQ=[
 ];
 // filtros: [id, etiqueta, clave coche, modo]
 const FL=[['pMin','Precio mín (€)','precio','min'],['pMax','Precio máx (€)','precio','max'],['cvMin','Potencia mín (CV)','cv','min'],['cvMax','Potencia máx (CV)','cv','max'],['largoMax','Largo máx (mm)','largo','max'],['anchoMax','Ancho máx (mm)','ancho','max'],['altoMax','Alto máx (mm)','alto','max'],['malMin','Maletero mín (L)','mal','min'],['rangoMin','Autonomía mín (km)','rango','min'],['plazasMin','Plazas mín','plazas','min'],['acelMax','0-100 máx (s)','acel','max'],['dcMin','Carga DC mín (kW)','dc','min']];
-const TABS=[['base','Base de datos'],['comp','Comparar'],['rank','Ranking'],['chart','Gráficos'],['set','Ajustes']];
+const TABS=[['base','Base de datos','Coches','<rect x="3.5" y="4" width="7" height="7" rx="1.5"/><rect x="13.5" y="4" width="7" height="7" rx="1.5"/><rect x="3.5" y="14" width="7" height="6" rx="1.5"/><rect x="13.5" y="14" width="7" height="6" rx="1.5"/>'],
+ ['comp','Comparar','Comparar','<rect x="3.5" y="4" width="7" height="16" rx="1.5"/><rect x="13.5" y="4" width="7" height="16" rx="1.5"/><path d="M6 9h2M16 9h2M6 13h2M16 13h2"/>'],
+ ['rank','Ranking','Ranking','<path d="M3 20h18M9.5 20V8.5h5V20M3.5 20v-6h6M14.5 20v-8.5h6V20"/>'],
+ ['chart','Gráficos','Gráficos','<path d="M4 20V11M10 20V5M16 20v-6M3 20h18"/>'],
+ ['set','Ajustes','Ajustes','<path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/>']];
+let QS=''; // búsqueda en la base (no se guarda)
 
 // Rutas largas y parámetros del simulador (al estilo ABRP)
 const DEF_RP={soc0:90,socMin:10,socMax:80,over:5,fReal:1.15,fWltp:1.3,fFrio:1.3,viento:1.1,cargaFrio:1.3,combAut:1.15,combF:1.08};
@@ -339,41 +554,94 @@ function tog(a,v,on){const i=a.indexOf(v);if(on&&i<0)a.push(v);if(!on&&i>=0)a.sp
 function nActive(){return FL.filter(x=>num(S.f[x[0]])!=null).length+(S.f.t.length?1:0)+(S.f.carroc?1:0)+S.f.eq.length}
 
 /* ---- tabs ---- */
-function renderTabs(){$('tabs').innerHTML=TABS.map(([k,l])=>`<button class="tab ${S.tab===k?'on':''}" onclick="S.tab='${k}';save();renderTabs();showTab()">${l}</button>`).join('');showTab()}
-function showTab(){TABS.forEach(([k])=>$('pg-'+k).classList.toggle('on',S.tab===k))}
+function renderTabs(){if(!TABS.some(t=>t[0]===S.tab))S.tab='base';
+ $('tabs').innerHTML=TABS.map(([k,l,sh,ic])=>`<button class="nav ${S.tab===k?'on':''}" ${S.tab===k?'aria-current="page"':''} onclick="goTab('${k}')"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span>${innerWidth<=860?sh:l}</span></button>`).join('');showTab()}
+function goTab(k){const ch=S.tab!==k;S.tab=k;save();renderTabs();if(ch)window.scrollTo(0,0)}
+function showTab(){TABS.forEach(([k])=>$('pg-'+k).classList.toggle('on',S.tab===k));document.body.dataset.tab=S.tab;const t=TABS.find(x=>x[0]===S.tab);$('ptitle').textContent=t[1];pageSub()}
+// Subtítulo de cada página
+function pageSub(){const el=$('psub');if(!el)return;const n=filt().length,nf=nActive();
+ el.textContent=S.tab==='base'?`${n} de ${S.cars.length} coches${nf?` · ${nf} filtro${nf>1?'s':''} activo${nf>1?'s':''}`:''}`:
+ S.tab==='comp'?`${S.sel.filter(byId).length} de 5 coches elegidos`:S.tab==='rank'?`${n} coches puntuados según tus pesos`:S.tab==='chart'?'Cada dato en su gráfica, el mejor arriba':'Sincronización, Gemini, precios y viajes'}
+let navW=innerWidth<=860;addEventListener('resize',()=>{const w=innerWidth<=860;if(w!==navW){navW=w;renderTabs()}});
+function closeMenu(){['moremenu','fbox'].forEach(id=>{const m=$(id);if(m)m.open=false})}
+document.addEventListener('click',e=>{['moremenu','fbox'].forEach(id=>{const m=$(id);if(m&&m.open&&!m.contains(e.target)&&document.contains(e.target))m.open=false})});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(S.edit!=null&&$('edit').classList.contains('on'))closeEdit();closeMenu()}});
+function setTheme(v){lsSet('cmp2_theme',v);applyTheme()}
+function applyTheme(){const v=lsGet('cmp2_theme');if(v)document.documentElement.dataset.theme=v;else delete document.documentElement.dataset.theme;const t=$('theme');if(t)t.value=v}
 
 /* ---- base de datos ---- */
 function completeness(c){const n=NUM.length+EQ.length;let h=0;NUM.forEach(x=>{if(num(c[x[0]])!=null)h++});EQ.forEach(e=>{if(c.eq&&typeof c.eq[e[0]]==='boolean')h++});return Math.round(100*h/n)}
 // Datos completos por apartado: [[nombre, tenidos, total], …] (apartados de datos + equipamiento)
 function compGroups(c){const g=[...new Set(NUM.map(n=>n[3]))].map(gr=>{const ks=NUM.filter(n=>n[3]===gr);return[gr,ks.filter(n=>num(c[n[0]])!=null).length,ks.length]});
  g.push(['Equipamiento',EQ.filter(e=>c.eq&&typeof c.eq[e[0]]==='boolean').length,EQ.length]);return g}
-function compHtml(c){const p=completeness(c),col=p>=75?'var(--ok)':p>=40?'var(--ac)':'var(--bad)';
- return `<div style="margin:8px 0"><b>Datos completos: ${p} %</b><div style="background:var(--bg);border-radius:6px;height:8px;margin:4px 0 6px"><div style="width:${p}%;height:100%;border-radius:6px;background:${col}"></div></div>`+
+const compCol=p=>p>=75?'var(--ok)':p>=40?'var(--ac)':'var(--bad)';
+function compHtml(c){const p=completeness(c);
+ return `<div class="comp"><b>Datos completos: ${p} %</b><div class="meter"><i style="width:${p}%;background:${compCol(p)}"></i></div>`+
  `<div class="mu">${compGroups(c).map(([g,h,t])=>`<span style="white-space:nowrap;margin-right:10px">${esc(g)} <b>${h}/${t}</b></span>`).join(' ')}</div></div>`}
-function renderTable(){const L=filt();$('cnt').textContent=`${L.length} de ${S.cars.length} coches (filtros activos: ${nActive()})`;$('fsum').textContent=`Filtros (${nActive()} activos)`;
- if(!S.cars.length){$('tbl').innerHTML='<tr><td>Base vacía. Añade tu primer coche desde un vídeo o a mano.</td></tr>';return}
+// Cifras clave de un coche (con los datos de su mecánica): [valor, unidad, etiqueta]
+function keyFigs(c){const m=withMech(c),pick=(...o)=>o.find(x=>num(x[0])!=null)||[null,o[0][1],o[0][2]];
+ return[[num(c.precio),'€','Precio'],pick([m.rangoReal,'km','Autonomía real'],[m.rango,'km','Autonomía WLTP']),
+  pick([m.kwh100Real,'kWh/100','Consumo real'],[m.l100Real,'L/100','Consumo real'],[m.kwh100,'kWh/100','Consumo WLTP'],[m.l100,'L/100','Consumo WLTP']),[num(m.cv),'CV','Potencia']]}
+const figHtml=([v,u,l])=>`<div><dt>${l}</dt><dd${v==null?' class="na"':''}>${v==null?'–':fmt(v)+`<small>${u}</small>`}</dd></div>`;
+const CAR_SVG='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 40v-6l6-11c1-2 3-3 5-3h26c2 0 4 1 5 3l6 11v6c0 2-1 3-3 3h-2M14 43h-3c-2 0-3-1-3-3M22 43h20"/><circle cx="18" cy="43" r="4"/><circle cx="46" cy="43" r="4"/><path d="M14 31h36M22 20l-3 11M42 20l3 11"/></svg>';
+// Foto que rellena su caja (cover); si no hay o no carga, silueta.
+const photo=c=>{const u=carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" ${imgFb(c,"this.outerHTML='<span class=&quot;noph&quot;>'+CAR_SVG+'</span>'")}>`:`<span class="noph" title="Sin foto todavía: pulsa «Completar ficha»">${CAR_SVG}</span>`};
+function carCard(c){const on=S.sel.includes(c.id),p=completeness(c);
+ return `<article class="car${on?' sel':''}"><div class="carph" onclick="openEdit(${c.id})">${photo(c)}${c.t?`<span class="tbadge">${esc(c.t)}</span>`:''}</div>
+ <div class="carbd"><button class="carnm" onclick="openEdit(${c.id})" aria-label="Abrir ficha de ${esc(nm(c))}"><span class="mk">${esc(c.marca||'Sin marca')}</span><b>${esc(c.modelo||'(sin modelo)')}</b><span class="vr">${esc(c.version||' ')}</span></button>
+ <dl class="kfs">${keyFigs(c).map(figHtml).join('')}</dl></div>
+ <footer class="carft"><span class="meter" title="Datos completos: ${p} %"><i style="width:${p}%;background:${compCol(p)}"></i></span><span class="mu">${p} %</span><label class="cmpchk"><input type="checkbox" ${on?'checked':''} onchange="selCar(${c.id},this.checked)">Comparar</label></footer></article>`}
+function renderTable(){const q=lc(QS),L=filt().filter(c=>!q||lc(nm(c)).includes(q));$('cnt').textContent=q?`${L.length} coche${L.length===1?'':'s'} con «${QS.trim()}»`:'';$('fsum').textContent=nActive()?`Filtros · ${nActive()}`:'Filtros';$('fbox').classList.toggle('on',nActive()>0);pageSub();
+ const v=S.view==='tbl'?'tbl':'cards';
+ $('viewseg').innerHTML=[['cards','Tarjetas'],['tbl','Tabla']].map(([k,l])=>`<button class="${v===k?'on':''}" aria-pressed="${v===k}" onclick="S.view='${k}';save();renderTable()">${l}</button>`).join('');
+ $('cards').style.display=v==='cards'?'':'none';$('tblw').style.display=v==='tbl'?'':'none';
+ if(!S.cars.length){$('cards').innerHTML=`<div class="empty"><b>Todavía no hay coches</b>Pega un enlace de YouTube en «Añadir desde vídeos de YouTube» o añade uno a mano.</div>`;$('tbl').innerHTML='<tr><td>Base vacía. Añade tu primer coche desde un vídeo o a mano.</td></tr>';return}
+ if(v==='cards'){$('cards').innerHTML=L.map(carCard).join('')||`<div class="empty"><b>Ningún coche coincide</b>Cambia la búsqueda o quita algún filtro.</div>`;return}
  $('tbl').innerHTML='<tr><th>Comparar</th><th></th><th>Coche</th><th>Tipo</th><th>Precio €</th><th>CV</th><th>Largo mm</th><th>Maletero L</th><th>Autonomía km</th><th>€/100 km</th><th>Datos</th><th>Fuentes</th><th></th></tr>'+
  L.map(c=>`<tr><td><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)"></td><td>${imgTag(c,64,36)}</td><td><a href="#" onclick="openEdit(${c.id});return false">${esc(nm(c))}</a></td><td>${esc(c.t||'–')}</td><td>${fmt(c.precio)}</td><td>${fmt(c.cv)}</td><td>${fmt(c.largo)}</td><td>${fmt(c.mal)}</td><td>${fmt(c.rango)}</td><td>${fmt(val(c,'coste100'))}</td><td>${completeness(c)}%</td><td>${(c.src||[]).length}</td><td><button onclick="delCar(${c.id})">✕</button></td></tr>`).join('')}
-function selCar(id,on){tog(S.sel,id,on);if(S.sel.length>5)S.sel.shift();renderTable();save();renderCompare()}
+function selCar(id,on){tog(S.sel,id,on);if(S.sel.length>5)S.sel.shift();renderTable();save();renderCompare();pageSub()}
 function delCar(id){if(!confirm('¿Borrar este coche?'))return;S.cars=S.cars.filter(c=>c.id!==id);S.sel=S.sel.filter(x=>x!==id);if(S.edit===id)S.edit=null;save();renderAll()}
-function addCar(){const c={id:newId(),eq:{},src:[],notas:[],t:'BEV',modelo:'Nuevo coche'};S.cars.push(c);S.edit=c.id;save();renderAll();$('edit').scrollIntoView()}
-function openEdit(id){S.edit=id;renderEdit();$('edit').scrollIntoView()}
-function renderEdit(){const c=byId(S.edit);if(!c){$('edit').innerHTML='';return}
+function addCar(){const c={id:newId(),eq:{},src:[],notas:[],t:'BEV',modelo:'Nuevo coche'};S.cars.push(c);S.edit=c.id;S.etab='datos';save();renderAll()}
+let editFrom=null;
+function openEdit(id){editFrom=document.activeElement;S.edit=id;S.etab='datos';renderEdit();const b=document.querySelector('#edit .shbar button');if(b)b.focus()}
+function closeEdit(){S.edit=null;save();renderEdit();if(editFrom&&document.contains(editFrom))editFrom.focus();editFrom=null}
+function setEtab(k){S.etab=k;renderEdit()}
+function renderEdit(){const box=$('edit'),c=byId(S.edit);
+ if(!c){box.classList.remove('on');box.innerHTML='';document.body.classList.remove('noscroll');return}
+ const old=$('shscroll'),top=old?old.scrollTop:0;
+ box.classList.add('on');document.body.classList.add('noscroll');
+ const m=withMech(c),et=['datos','equip','carga','fuentes'].includes(S.etab)&&(S.etab!=='carga'||hasCurve(c))?S.etab:'datos';
+ const c1080=hasCurveT(c)?curveMin(c,10,80):num(m.c1080);
+ const hn=[...keyFigs(c),[num(m.acel),'s','0-100 km/h'],[c1080==null?null:Math.round(c1080),'min','Carga 10-80 %']];
+ const tr=tracOf(c),tags=[c.t,c.motor,tr?'Tracción '+TRL[tr]:'',c.carroc,c.anio].filter(Boolean);
+ const tabs=[['datos','Datos técnicos'],['equip','Equipamiento'],...(hasCurve(c)?[['carga','Curva de carga']]:[]),['fuentes','Fuentes y notas']];
  const grp=[...new Set(NUM.map(n=>n[3]))];
  const q=encodeURIComponent([c.marca,c.modelo,c.version].filter(Boolean).join(' ')),gs=site=>`https://www.google.com/search?q=site%3A${site}+${q}`;
  const webMark=k=>c.fsrc&&c.fsrc[k]==='modelo'?' <span title="Dato del conocimiento de Gemini, sin verificar en web">🧠</span>':c.fsrc&&c.fsrc[k]?(/^https?:/.test(c.fsrc[k])?` <a href="${esc(c.fsrc[k])}" target="_blank" rel="noopener" title="Dato sacado de internet: ${esc(c.fsrc[k])}">🌐</a>`:' <span title="Dato sacado de internet">🌐</span>'):'';
  const webSrc=[...new Set(Object.values(c.fsrc||{}).filter(u=>/^https?:/.test(u)))];
- $('edit').innerHTML=`<details class="box" open><summary>Editar: ${esc(nm(c))}</summary>
- <div style="margin-top:8px">${imgTag(c,240,135)}${officialImg(c)&&c.imgSrc?`<div class="mu">Foto: ${esc(c.imgSrc)}</div>`:(ytThumb(c)?'<div class="mu">Foto: miniatura del vídeo de YouTube (no hay foto oficial)</div>':'')}</div>${compHtml(c)}
- <p><button onclick="queueFicha(${c.id})">🌐 Completar ficha${officialImg(c)?'':' y buscar foto oficial'}</button> <span class="mu">Busca: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span></p>
- <div class="g" style="margin-top:8px">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Motor (sin acabado, p. ej. «Gran Autonomía», «2.5 MHEV 141 CV»)<input type="text" value="${esc(c.motor)}" onchange="setF(${c.id},'motor',this.value.trim())"></label><label>Tracción<select onchange="setF(${c.id},'trac',this.value)"><option value="">${tracOf(c)&&!c.trac?'Deducida: '+TRL[tracOf(c)]:'?'}</option>${Object.entries(TRL).map(([k,l])=>`<option value="${k}" ${c.trac===k?'selected':''}>${l[0].toUpperCase()+l.slice(1)} (${k})</option>`).join('')}</select></label></div>${(()=>{const m=mechMembers(c);return m.length>1?`<p class="mu">Misma mecánica (${esc(mechLabel(c))}) que: ${m.filter(x=>x!==c).map(x=>`<a href="#" onclick="openEdit(${x.id});return false">${esc(nm(x))}</a>`).join(' · ')}. Los datos de motor, consumo y carga que falten aquí se toman de ellos.</p>`:''})()}`+
- grp.map(g=>`<h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div>`).join('')+
- [...new Set(EQ.map(e=>e[2]))].map(g=>`<h3>Equipamiento: ${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div>`).join('')+
- (hasCurve(c)?`<h3>Curva de carga rápida</h3>${curveSvg([{n:nm(c),cu:c.curva}],520,210)}<div class="mu">${hasCurveT(c)?`Del 10 al 80 %: <b>${fmtMin(curveMin(c,10,80))}</b>`:'Falta la batería útil para calcular tiempos'}${c.optCarga?` · Ventana óptima en viaje: <b>${c.optCarga[0]}–${c.optCarga[1]} %</b> (cargar más allá compensa menos)`:''}${c.bateria?' · Batería: '+esc(c.bateria):''}${c.curvaSrc?` · Fuente: <a href="${esc(c.curvaSrc)}" target="_blank" rel="noopener">evkx.net</a>`:''}</div>`:'')+
- `<h3>Fuentes</h3>${(c.src||[]).map(s=>`<div class="mu"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.canal||s.url)}</a> ${esc(s.fecha||'')}</div>`).join('')||'<div class="mu">Sin fuentes</div>'}
- ${webSrc.length||(c.web||[]).length?`<h3>Fuentes web (🌐)</h3>${webSrc.map(u=>`<div class="mu"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,'').slice(0,80))}</a></div>`).join('')}${(c.web||[]).length?`<div class="mu">Consultadas: ${c.web.map(w=>`<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.title||'web')}</a>`).join(' · ')}</div>`:''}`:''}
- ${(c.notas||[]).length?`<h3>Notas</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}
- <p><button onclick="S.edit=null;renderEdit()">Cerrar</button></p></details>`}
+ const links=`<span class="mu">Buscar en: <a href="${gs('km77.com')}" target="_blank" rel="noopener">km77</a> · <a href="${gs('ev-database.org')}" target="_blank" rel="noopener">EV Database</a> · <a href="${gs('spritmonitor.de')}" target="_blank" rel="noopener">Spritmonitor</a> · <a href="${gs('euroncap.com')}" target="_blank" rel="noopener">Euro NCAP</a></span>`;
+ const mates=(()=>{const mm=mechMembers(c);return mm.length>1?`<p class="mu">Misma mecánica (${esc(mechLabel(c))}) que: ${mm.filter(x=>x!==c).map(x=>`<a href="#" onclick="openEdit(${x.id});return false">${esc(nm(x))}</a>`).join(' · ')}. Los datos de motor, consumo y carga que falten aquí se toman de ellos.</p>`:''})();
+ let body='';
+ if(et==='datos')body=`<section><h3>Identificación</h3><div class="g">${[['marca','Marca'],['modelo','Modelo'],['version','Versión'],['carroc','Carrocería'],['img','Imagen (enlace, opcional)']].map(([k,l])=>`<label>${l}<input type="text" value="${esc(c[k])}" onchange="setF(${c.id},'${k}',this.value)"></label>`).join('')}<label>Tipo de motor<select onchange="setF(${c.id},'t',this.value)">${T.map(t=>`<option ${c.t===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Motor (sin acabado, p. ej. «Gran Autonomía», «2.5 MHEV 141 CV»)<input type="text" value="${esc(c.motor)}" onchange="setF(${c.id},'motor',this.value.trim())"></label><label>Tracción<select onchange="setF(${c.id},'trac',this.value)"><option value="">${tracOf(c)&&!c.trac?'Deducida: '+TRL[tracOf(c)]:'?'}</option>${Object.entries(TRL).map(([k,l])=>`<option value="${k}" ${c.trac===k?'selected':''}>${l[0].toUpperCase()+l.slice(1)} (${k})</option>`).join('')}</select></label></div>${mates}</section>`+
+  grp.map(g=>`<section><h3>${g}</h3><div class="g">${NUM.filter(n=>n[3]===g).map(n=>`<label><span>${n[1]}${n[2]?' ('+n[2]+')':''}${webMark(n[0])}</span><input type="number" step="any" value="${c[n[0]]??''}" onchange="setF(${c.id},'${n[0]}',num(this.value))"></label>`).join('')}</div></section>`).join('');
+ else if(et==='equip')body=[...new Set(EQ.map(e=>e[2]))].map(g=>`<section><h3>${g}</h3><div class="eqg">${EQ.filter(e=>e[2]===g).map(e=>{const v=c.eq&&c.eq[e[0]];return `<label class="row"><select onchange="setE(${c.id},'${e[0]}',this.value)" aria-label="${esc(e[1])}"><option value="">?</option><option value="s" ${v===true?'selected':''}>Sí</option><option value="n" ${v===false?'selected':''}>No</option></select>${esc(e[1])}</label>`}).join('')}</div></section>`).join('');
+ else if(et==='carga')body=`<section><h3>Curva de carga rápida</h3>${curveSvg([{n:nm(c),cu:c.curva}],620,240)}<p class="mu">${hasCurveT(c)?`Del 10 al 80 %: <b>${fmtMin(curveMin(c,10,80))}</b>`:'Falta la batería útil para calcular tiempos'}${c.optCarga?` · Ventana óptima en viaje: <b>${c.optCarga[0]}–${c.optCarga[1]} %</b> (cargar más allá compensa menos)`:''}${c.bateria?' · Batería: '+esc(c.bateria):''}${c.curvaSrc?` · Fuente: <a href="${esc(c.curvaSrc)}" target="_blank" rel="noopener">evkx.net</a>`:''}</p></section>`;
+ else body=`<section><h3>Foto</h3><p class="mu" style="margin:0">${officialImg(c)&&c.imgSrc?'Foto oficial: '+esc(c.imgSrc):ytThumb(c)?'Miniatura del vídeo de YouTube (no hay foto oficial)':'Sin foto'}</p>
+  <h3>Vídeos</h3>${(c.src||[]).map(s=>`<div class="mu"><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.canal||s.url)}</a> ${esc(s.fecha||'')}</div>`).join('')||'<div class="mu">Sin vídeos</div>'}
+  ${webSrc.length||(c.web||[]).length?`<h3>Fuentes web (🌐)</h3>${webSrc.map(u=>`<div class="mu"><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/,'').slice(0,80))}</a></div>`).join('')}${(c.web||[]).length?`<div class="mu">Consultadas: ${c.web.map(w=>`<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.title||'web')}</a>`).join(' · ')}</div>`:''}`:''}
+  ${(c.notas||[]).length?`<h3>Notas</h3>${c.notas.map(n=>`<div class="mu">• ${esc(n)}</div>`).join('')}`:''}</section>`;
+ box.innerHTML=`<div class="scrim" onclick="closeEdit()"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Ficha de ${esc(nm(c))}">
+ <div class="shbar"><button onclick="closeEdit()" aria-label="Cerrar ficha">← Volver</button><span class="t">${esc(nm(c))}</span><label class="cmpchk"><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)">Comparar</label><button class="danger" onclick="delCar(${c.id})" aria-label="Borrar este coche">Borrar</button></div>
+ <div class="shscroll" id="shscroll">
+ <div class="hero"><div class="heroph">${photo(c)}</div><div class="herotx"><div class="mk">${esc(c.marca||'Sin marca')}</div><h2>${esc(c.modelo||'(sin modelo)')}${c.version?`<span>${esc(c.version)}</span>`:''}</h2>
+  ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+  <dl class="hnum">${hn.map(figHtml).join('')}</dl>
+  ${compHtml(c)}
+  <p style="margin:12px 0 6px"><button class="p" onclick="queueFicha(${c.id})">Completar ficha${officialImg(c)?'':' y buscar foto oficial'}</button></p>${links}</div></div>
+ <div class="seg etabs" role="tablist">${tabs.map(([k,l])=>`<button role="tab" aria-selected="${et===k}" class="${et===k?'on':''}" onclick="setEtab('${k}')">${l}</button>`).join('')}</div>
+ <div class="etab">${body}</div>
+ </div></div>`;
+ if(top)$('shscroll').scrollTop=top}
 function setF(id,k,v){const c=byId(id);if(!c)return;c[k]=v;save();refresh()}
 function setE(id,k,v){const c=byId(id);c.eq=c.eq||{};if(v==='')delete c.eq[k];else c.eq[k]=v==='s';save();refresh()}
 
@@ -706,6 +974,7 @@ const QST={pend:['⏳','Pendiente'],proc:['⚙️','Procesando'],ok:['✅','Hech
 function renderQ(){if(!$('qtbl'))return;const u=usage();
  const n=k=>Q.items.filter(x=>x.st===k).length;
  $('qtog').textContent=Q.paused?'Reanudar cola':'Pausar cola';
+ {const p=n('pend')+n('proc'),b=$('qbadge');if(b)b.textContent=p?`${p} en cola`:n('err')?`${n('err')} con error`:''}
  $('qstat').innerHTML=`Hoy: <b>${fmtK(u.tok)}</b> de ${fmtK(LIM.dayTok)} tokens · <b>${u.req}</b> de ${LIM.dayReq} vídeos`+(Q.items.length?` · Cola: ${n('pend')+n('proc')} pendientes, ${n('ok')} hechos${n('err')?', '+n('err')+' con error':''}${n('skip')?', '+n('skip')+' saltados':''}`:'')+(qMsg?`<br>${esc(qMsg)}`:'');
  $('qtbl').innerHTML=Q.items.length?'<tr><th></th><th>Vídeo</th><th>Estado</th><th>Tokens</th><th></th></tr>'+Q.items.map(x=>`<tr><td>${QST[x.st][0]}</td><td>${x.kind==='ficha'?`📋 Ficha: ${esc(byId(x.car)?nm(byId(x.car)):'(coche borrado)')}`:`<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.yt)}</a>${x.canal?' <span class="mu">'+esc(x.canal)+'</span>':''}`}</td><td style="white-space:normal;min-width:220px">${QST[x.st][1]}${x.st==='proc'?' <span class="mu" id="qrun"></span>':''}${x.msg?'<div class="mu">'+esc(x.msg)+'</div>':''}</td><td>${x.tok?fmtK(x.tok):x.est?'~'+fmtK(x.est):'–'}</td><td>${x.st==='err'||x.st==='skip'||(x.st==='pend'&&x.next>Date.now())?`<button onclick="qRetry('${x.yt}')">${x.st==='pend'?'Ya':'Reintentar'}</button> `:''}${x.st!=='proc'?`<button onclick="qDel('${x.yt}')">✕</button>`:''}</td></tr>`).join(''):''}
 function renderLims(){
@@ -817,7 +1086,7 @@ setInterval(()=>{if(document.visibilityState==='visible'||SY.proc)syncNow()},600
 
 /* ---- enlaces recibidos desde «Compartir» de Android ---- */
 function takeShared(){const p=new URLSearchParams(location.search);const txt=[p.get('url'),p.get('text'),p.get('title')].filter(Boolean).join(' ');if(!txt)return;
- history.replaceState(null,'',location.pathname);S.tab='base';renderTabs();
+ history.replaceState(null,'',location.pathname);S.tab='base';renderTabs();$('vbox').open=true;
  if(!(txt.match(/\S+/g)||[]).some(ytId)){$('mlog').textContent='Lo que has compartido no contiene ningún enlace de YouTube.';return}
  $('vurl').value=txt;$('vcan').value='';addFromBox();$('mlog').textContent='📥 '+$('mlog').textContent+(syOn()?' Se enviará al PC para procesarlo.':'');window.scrollTo(0,0)}
 
@@ -915,12 +1184,14 @@ function renderCmpCharts(cars){const box=$('cmpcharts');if(!box)return;if(cars.l
  box.innerHTML=html+'</details>'}
 
 function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean).map(withMech);renderCmpCharts(cars);
- if(cars.length<2){$('cmp').innerHTML='<tr><td>Selecciona al menos 2 coches.</td></tr>';return}
+ $('cmptblbox').style.display=cars.length<2?'none':'';
+ if(cars.length<2){$('cmp').innerHTML='';$('cmpsum').innerHTML=`<div class="empty"><b>Elige al menos 2 coches</b>${cars.length?'Te falta uno más para empezar la comparativa.':'Toca una marca y después los coches que quieras comparar.'}</div>`;return}
+ const wins=cars.map(()=>0);
  let h='<tr><th></th>'+cars.map(c=>`<th style="white-space:normal;vertical-align:bottom;min-width:170px;border-top:5px solid ${carCol(c)}">${imgTag(c,170,96)}<div style="margin-top:4px">${dot(carCol(c))}${esc(nm(c))}</div></th>`).join('')+'</tr>',g='';
- const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
+ const row=(label,vals,dir,f)=>{if(vals.every(v=>v==null))return '';const b=bestIdx(vals,dir);if(b>=0)wins[b]++;return `<tr><td>${label}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${f?f(v):fmt(v)}</td>`).join('')+'</tr>'};
  h+=`<tr><td>Tipo</td>${cars.map(c=>`<td>${esc(c.t||'–')}</td>`).join('')}</tr>`;
  h+=`<tr><td>Mecánica</td>${cars.map(c=>`<td style="white-space:normal">${esc(mechLabel(c))}</td>`).join('')}</tr>`;
- h+=row('Datos completos (%)',cars.map(c=>completeness(c)),'high',v=>v+' %');
+ h+=row('Datos completos (%)',cars.map(c=>completeness(c)),'high',v=>v+' %');wins.fill(0); // tener más datos no es «ganar»
  h+=`<tr><td class="mu">Por apartado</td>${cars.map(c=>`<td class="mu" style="white-space:normal;min-width:120px">${compGroups(c).filter(([,hh,t])=>hh<t).map(([g,hh,t])=>`${esc(g)} ${hh}/${t}`).join('<br>')||'Todo completo'}</td>`).join('')}</tr>`;
  ALLN.forEach(n=>{if(n[3]!==g){g=n[3];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=row(n[1]+(n[2]?' ('+n[2]+')':''),cars.map(c=>val(c,n[0])),n[4])});
  if(cars.some(hasCurve)){const cc=cars.filter(hasCurve);
@@ -929,11 +1200,13 @@ function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean)
    `<tr><td>Batería</td>${cars.map(c=>`<td>${esc(c.bateria||'–')}</td>`).join('')}</tr>`}
  h+=`<tr><th colspan="${cars.length+1}">Coste por viaje tipo</th></tr>`+S.trips.map(t=>row(`${esc(t.n)} (${t.km} km) €`,cars.map(c=>tripCost(c,t)),'low')).join('');
  let rh='';S.routes.forEach(r=>CONDS.forEach(([cd,lab])=>{const sims=cars.map(c=>routeSim(c,r,cd));if(sims.every(s=>!s))return;
-  rh+=`<tr><th colspan="${cars.length+1}">${esc(r.n)} (${r.km} km) · ${lab}</th></tr>`+RMET.map(([k,l,f])=>{const vals=sims.map(s=>s?s[k]:null),b=bestIdx(vals,'low');
+  rh+=`<tr><th colspan="${cars.length+1}">${esc(r.n)} (${r.km} km) · ${lab}</th></tr>`+RMET.map(([k,l,f])=>{const vals=sims.map(s=>s?s[k]:null),b=bestIdx(vals,'low');if(b>=0)wins[b]++;
    return `<tr><td>${l[0].toUpperCase()+l.slice(1)}</td>`+vals.map((v,i)=>`<td class="${i===b?'best':''}">${v==null?'–':(sims[i].est?'≈ ':'')+f(v)}</td>`).join('')+'</tr>'}).join('')}));
  if(rh)h+=rh+`<tr><td colspan="${cars.length+1}" class="mu" style="white-space:normal">≈ = estimado: falta el consumo real en autopista o el tiempo de carga y se calcula a partir de otros datos (ajustes en Ajustes → Rutas largas). Pulsa «Completar ficha» para buscar los datos reales.</td></tr>`;
  g='';EQ.forEach(e=>{const vals=cars.map(c=>c.eq&&typeof c.eq[e[0]]==='boolean'?c.eq[e[0]]:null);if(vals.every(v=>v==null))return;if(e[2]!==g){g=e[2];h+=`<tr><th colspan="${cars.length+1}">${g}</th></tr>`}h+=`<tr><td>${esc(e[1])}</td>`+vals.map(v=>`<td class="${v===true?'best':''}">${v==null?'?':v?'✓':'✗'}</td>`).join('')+'</tr>'});
- $('cmp').innerHTML=h}
+ $('cmp').innerHTML=h;
+ const mx=Math.max(...wins),lead=wins.filter(w=>w===mx).length===1&&mx>0;
+ $('cmpsum').innerHTML=`<div class="board">${cars.map((c,i)=>`<div class="sb${lead&&wins[i]===mx?' lead':''}"><div class="sbph" style="border-color:${carCol(c)}">${photo(c)}</div>${lead&&wins[i]===mx?'<span class="crown">Gana la comparativa</span>':''}<div class="sbb"><div class="sbn">${dot(carCol(c))}${esc(nm(c))}</div><div class="sbw">${wins[i]}<small>dato${wins[i]===1?'':'s'} donde es el mejor</small></div></div></div>`).join('')}</div>`}
 
 /* ---- ranking ---- */
 function scoreList(L){const rng={};ALLN.forEach(n=>{const v=L.map(c=>val(c,n[0])).filter(x=>x!=null);rng[n[0]]=v.length?[Math.min(...v),Math.max(...v)]:null});
@@ -948,7 +1221,12 @@ function scoreList(L){const rng={};ALLN.forEach(n=>{const v=L.map(c=>val(c,n[0])
 function renderRank(){const L=filt();
  const used=WSEC().filter(sec=>gW(sec.g)>0&&sec.items.some(it=>wOf(it)>0)).map(sec=>sec.g);
  const partsHtml=p=>`<span class="parts">${used.map(g=>p[g]==null?`<i style="height:2px;background:var(--bd)" title="${esc(g)}: sin datos"></i>`:`<i style="height:${Math.max(2,p[g]*0.22)}px" title="${esc(g)}: ${Math.round(p[g])}"></i>`).join('')}</span>`;
- $('rank').innerHTML=L.length?'<tr><th>#</th><th></th><th>Coche</th><th>Puntuación</th><th title="Nota de cada apartado (pasa el ratón por encima)">Por apartado</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L.map(withMech)).map((r,i)=>`<tr><td><b>${i+1}</b></td><td>${thumb(r.c,56,32)}</td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${partsHtml(r.parts)}</td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join('')+(used.length?`<tr><td colspan="8" class="mu" style="white-space:normal">Barras de «Por apartado», en orden: ${used.map(esc).join(' · ')}</td></tr>`:''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
+ if(!L.length){$('rank').innerHTML='<div class="empty"><b>Ningún coche que puntuar</b>No hay coches o ninguno pasa los filtros.</div>';return}
+ const R=scoreList(L.map(withMech)),sc=s=>s==null?'–':fmt(Math.round(s*10)/10),pod=R.slice(0,3).filter(r=>r.s!=null&&R.length>=3);
+ const sub=c=>[c.precio?fmt(c.precio)+' €':'',val(c,'coste100')!=null?fmt(Math.round(val(c,'coste100')*100)/100)+' €/100 km':'',completeness(c)+' % de datos'].filter(Boolean).join(' · ');
+ $('rank').innerHTML=(pod.length===3?`<div class="podium">${pod.map((r,i)=>`<button class="pod p${i+1}" onclick="openEdit(${r.c.id})" aria-label="Puesto ${i+1}: ${esc(nm(r.c))}, ${sc(r.s)} puntos"><span class="podph">${photo(r.c)}</span><span class="podb"><span class="pos">${i+1}</span><span class="pnm">${esc(nm(r.c))}</span><span class="psc">${sc(r.s)}<small>puntos</small></span></span></button>`).join('')}</div>`:'')+
+  `<ol class="rlist" start="${pod.length+1}">${R.slice(pod.length).map((r,i)=>`<li class="rrow"><span class="rn">${i+1+pod.length}</span><span class="rph">${imgTag(r.c,64,36)}</span><button class="rnm" onclick="openEdit(${r.c.id})">${esc(nm(r.c))}<span>${esc(sub(r.c))}</span></button><span class="rsc rbar"><span class="t"><span class="f" style="display:block;width:${r.s==null?0:r.s}%"></span></span>${partsHtml(r.parts)}</span><span class="rsc"><b>${sc(r.s)}</b></span></li>`).join('')}</ol>`+
+  (used.length?`<p class="mu">Barras pequeñas: nota de cada apartado, en orden: ${used.map(esc).join(' · ')}. Toca un coche para ver su ficha.</p>`:'')}
 /* ---- pesos del ranking: estrellas por parámetro (0-5, se guardan como 0-10) y deslizador por apartado (0-10) ---- */
 const WDEF={wN:{precio:8,coste100:8,mal:6,rango:6,kwh100Real:6,cv:4,qInt:6,confort:6},wE:{acc:6,aeb:8},wG:{}};
 const secName=g=>g==='General'||g==='Derivado'?'Precio y general':g;
@@ -1010,7 +1288,7 @@ function renderChart(){if(!$('cgrp'))return;const grp=CG.find(x=>x[0]===S.cgrp)|
  $('chart').innerHTML=(cards.join('')||'<p class="mu">Ningún coche tiene datos de este grupo todavía. Prueba «Completar ficha».</p>')+(empty.length&&cards.some(Boolean)?`<p class="mu" style="grid-column:1/-1">Sin datos todavía: ${empty.map(esc).join(' · ')}.</p>`:'')}
 
 /* ---- ajustes ---- */
-function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();gsHint();renderLims();renderRoutes();$('appver').textContent=APP_VER;const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
+function renderSettings(){renderSy();$('gkey').value=lsGet(GK);$('gmodel').value=model();keyHint();fbHint();gsHint();renderLims();renderRoutes();applyTheme();$('appver').textContent=APP_VER;$('sidever').textContent='Versión '+APP_VER;const Lb={gas:'Gasolina €/L',die:'Diésel €/L',casa:'Electricidad casa €/kWh',pub:'Carga carretera €/kWh'};
  $('prices').innerHTML=Object.keys(Lb).map(k=>`<label>${Lb[k]}<input type="number" step="0.01" value="${S.pr[k]}" onchange="S.pr.${k}=+this.value;save();refresh()"></label>`).join('');
  $('trips').innerHTML='<tr><th>Viaje</th><th>km</th><th>% carretera</th></tr>'+S.trips.map((t,i)=>`<tr><td><input type="text" value="${esc(t.n)}" onchange="S.trips[${i}].n=this.value;save();refresh();renderChartSel()"></td><td><input type="number" value="${t.km}" onchange="S.trips[${i}].km=+this.value;save();refresh()"></td><td><input type="number" value="${t.road}" onchange="S.trips[${i}].road=+this.value;save();refresh()"></td></tr>`).join('')}
 const RPF=[['soc0','Carga al salir (%)'],['socMin','Llegar a cada parada con (%)'],['socMax','Cargar hasta (%)'],['over','Minutos extra por parada'],['fReal','Autopista templado / consumo real mixto (×)'],['fWltp','Autopista templado / consumo WLTP (×)'],['fFrio','Frío / templado (×)'],['viento','Viento en contra (×)'],['cargaFrio','Carga más lenta con frío (×)'],['combAut','Combustible autopista / homologado (×)'],['combF','Combustible con frío y viento (×)']];
@@ -1021,12 +1299,12 @@ function exp(){$('io').value=JSON.stringify(S)}
 function imp(){try{const d=JSON.parse($('io').value);if(!d.cars)throw 0;S=d;S.f=S.f||{t:[],eq:[]};S.sel=S.sel||[];save();renderAll()}catch(e){alert('JSON no válido')}}
 
 /* ---- render ---- */
-function refresh(){renderTable();renderCompare();renderRank();renderChart();$('fsum').textContent=`Filtros (${nActive()} activos)`}
+function refresh(){renderTable();renderCompare();renderRank();renderChart();pageSub()}
 function renderAll(){renderQ();renderFilters();renderTabs();renderSettings();renderWeights();renderChartSel();renderEdit();refresh()}
 S.cars.forEach(c=>{if(!c.u)c.u=1});Q.items.forEach(x=>{if(!x.u)x.u=1});
 snapAll();
 Q.items.forEach(x=>{if(x.st==='proc'&&(!x.by||x.by===DEV)){x.st='pend';x.msg='Interrumpido al cerrar la página; se reintenta'}});
-save();renderAll();schedule(1500);takeShared();syncNow();
+save();renderAll();$('vbox').open=!S.cars.length||Q.items.some(x=>x.st==='pend'||x.st==='proc'||x.st==='err');schedule(1500);takeShared();syncNow();
 if('serviceWorker' in navigator&&(location.protocol==='https:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)))navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
