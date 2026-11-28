@@ -167,6 +167,8 @@ section.gopt{margin:0;padding:14px 16px;display:flex;flex-direction:column;backg
 .steps li::marker{font:700 14px var(--fc);color:var(--ac)}
 .gact{margin:auto 0 0;padding-top:6px;display:flex;flex-wrap:wrap;gap:8px}
 /* ---- base: listado ---- */
+.ctag{display:inline-flex;align-items:center;font:600 11.5px/1 var(--f);font-style:normal;padding:3px 7px;border-radius:5px;background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok);margin-right:6px;vertical-align:1px;white-space:nowrap}
+.tag.ctag{font-size:12.5px;padding:4px 9px;border:1px solid color-mix(in srgb,var(--ok) 35%,transparent);margin:0}
 details.lbox{padding:14px 8px 8px}
 .lbox>summary{padding:0 12px 2px;flex-wrap:wrap}
 .lavg{font:400 13px var(--f);margin-left:auto}
@@ -363,7 +365,7 @@ section .cc,details.box .cc{box-shadow:none}
 <ol class="steps">
 <li>Pulsa <b>Exportar para Claude</b>. Se descarga <i>coches-para-fichas.json</i> en tu carpeta de Descargas, con lo que le falta a cada coche.</li>
 <li>En Claude Code, abierto en la carpeta del comparador, escribe <b>«completa las fichas»</b>. Claude te deja un archivo <i>fichas-claude….json</i> en esa carpeta.</li>
-<li>Pulsa <b>Importar fichas de Claude</b> y elige ese archivo. Rellena los huecos, actualiza precios y datos 🧠, y añade fotos y curvas de carga. Si encuentra coches duplicados, te pregunta antes de fusionarlos.</li>
+<li>Pulsa <b>Importar fichas de Claude</b> y elige ese archivo. Rellena los huecos, actualiza precios y datos 🧠, y añade fotos y curvas de carga. Cada coche importado queda marcado con la etiqueta <i class="ctag">✓ Ficha de Claude</i>. Si encuentra coches duplicados, te pregunta antes de fusionarlos.</li>
 </ol>
 <p class="gact"><button class="p" onclick="exportForClaude()">Exportar para Claude</button> <button onclick="$('fimp').click()">Importar fichas de Claude</button></p>
 </section>
@@ -457,7 +459,7 @@ section .cc,details.box .cc{box-shadow:none}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.5';
+const APP_VER='2026-11-28.6';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -658,13 +660,16 @@ const figHtml=([v,u,l])=>`<div><dt>${l}</dt><dd${v==null?' class="na"':''}>${v==
 const CAR_SVG='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M8 40v-6l6-11c1-2 3-3 5-3h26c2 0 4 1 5 3l6 11v6c0 2-1 3-3 3h-2M14 43h-3c-2 0-3-1-3-3M22 43h20"/><circle cx="18" cy="43" r="4"/><circle cx="46" cy="43" r="4"/><path d="M14 31h36M22 20l-3 11M42 20l3 11"/></svg>';
 // Foto que rellena su caja (cover); si no hay o no carga, silueta.
 const photo=c=>{const u=carImg(c);return u?`<img src="${esc(u)}" alt="" loading="lazy" referrerpolicy="no-referrer" ${imgFb(c,"this.outerHTML='<span class=&quot;noph&quot;>'+CAR_SVG+'</span>'")}>`:`<span class="noph" title="Sin foto todavía: pulsa «Completar ficha»">${CAR_SVG}</span>`};
+// Ficha completada por Claude: marcada al importar; las importadas antes se reconocen por sus notas «[Claude, web]».
+const byClaude=c=>!!c.claudeT||(c.notas||[]).some(n=>typeof n==='string'&&n.startsWith('[Claude, web]'));
+const CTAG='<i class="ctag" title="Datos buscados en internet por Claude e importados con «Importar fichas de Claude»">✓ Ficha de Claude</i>';
 // Listado de la base: una fila por coche con su % de datos completos (toca para abrir la ficha).
 function carRow(c){const p=completeness(c);
- return `<li><button class="lrow" onclick="openEdit(${c.id})" aria-label="Abrir ficha de ${esc(nm(c))}, datos completos ${p} %"><span class="lph">${thumb(c,56,32)||'<span class="lnoph"></span>'}</span><span class="lnm"><b>${esc([c.marca,c.modelo].filter(Boolean).join(' ')||'(sin nombre)')}</b><span>${esc([c.version,c.t].filter(Boolean).join(' · '))}</span></span><span class="lpc"><span class="meter"><i style="width:${p}%;background:${compCol(p)}"></i></span><b>${p} %</b></span></button></li>`}
+ return `<li><button class="lrow" onclick="openEdit(${c.id})" aria-label="Abrir ficha de ${esc(nm(c))}, datos completos ${p} %"><span class="lph">${thumb(c,56,32)||'<span class="lnoph"></span>'}</span><span class="lnm"><b>${esc([c.marca,c.modelo].filter(Boolean).join(' ')||'(sin nombre)')}</b><span>${byClaude(c)?CTAG:''}${esc([c.version,c.t].filter(Boolean).join(' · '))}</span></span><span class="lpc"><span class="meter"><i style="width:${p}%;background:${compCol(p)}"></i></span><b>${p} %</b></span></button></li>`}
 function renderTable(){const q=lc(QS),L=filt().filter(c=>!q||lc(nm(c)).includes(q)).sort((a,b)=>nm(a).localeCompare(nm(b),'es',{sensitivity:'base'}));$('fsum').textContent=nActive()?`Filtros · ${nActive()}`:'Filtros';$('fbox').classList.toggle('on',nActive()>0);pageSub();
  {const inc=S.cars.filter(c=>completeness(c)<100).length;$('gpill').textContent=S.cars.length?(inc?inc+' por completar':'Todas completas'):''}
  const avg=L.length?Math.round(L.reduce((s,c)=>s+completeness(c),0)/L.length):0;
- $('lsum').innerHTML=`Coches <span class="pill">${L.length}${q?` con «${esc(QS.trim())}»`:''}</span>${L.length?`<span class="mu lavg">Datos completos de media: ${avg} %</span>`:''}`;
+ $('lsum').innerHTML=`Coches <span class="pill">${L.length}${q?` con «${esc(QS.trim())}»`:''}</span>${L.length?`<span class="mu lavg">Datos completos de media: ${avg} % · ${L.filter(byClaude).length} con ficha de Claude</span>`:''}`;
  if(!S.cars.length){$('clist').innerHTML=`<div class="empty"><b>Todavía no hay coches</b>Pega un enlace de YouTube en «Añadir desde vídeos de YouTube» o añade uno a mano.</div>`;return}
  $('clist').innerHTML=L.length?`<ul class="llist">${L.map(carRow).join('')}</ul>`:`<div class="empty"><b>Ningún coche coincide</b>Cambia la búsqueda o quita algún filtro.</div>`}
 function selCar(id,on){tog(S.sel,id,on);if(S.sel.length>5)S.sel.shift();renderTable();save();renderCompare();pageSub()}
@@ -702,7 +707,7 @@ function renderEdit(){const box=$('edit'),c=byId(S.edit);
  <div class="shbar"><button onclick="closeEdit()" aria-label="Cerrar ficha">← Volver</button><span class="t">${esc(nm(c))}</span><label class="cmpchk"><input type="checkbox" ${S.sel.includes(c.id)?'checked':''} onchange="selCar(${c.id},this.checked)">Comparar</label><button class="danger" onclick="delCar(${c.id})" aria-label="Borrar este coche">Borrar</button></div>
  <div class="shscroll" id="shscroll">
  <div class="hero"><div class="heroph">${photo(c)}</div><div class="herotx"><div class="mk">${esc(c.marca||'Sin marca')}</div><h2>${esc(c.modelo||'(sin modelo)')}${c.version?`<span>${esc(c.version)}</span>`:''}</h2>
-  ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+  ${tags.length||byClaude(c)?`<div class="tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}${byClaude(c)?CTAG.replace('ctag','ctag tag'):''}</div>`:''}
   <dl class="hnum">${hn.map(figHtml).join('')}</dl>
   ${compHtml(c)}
   <p style="margin:12px 0 6px"><button class="p" onclick="queueFicha(${c.id})">Completar ficha${officialImg(c)?'':' y buscar foto oficial'}</button></p>${links}</div></div>
@@ -1022,6 +1027,7 @@ async function importFichasFile(file){if(!file)return;let d;
   if(TRL[f.trac])c.trac=f.trac;if(typeof f.motor==='string'&&f.motor.trim())c.motor=f.motor.trim().slice(0,60);
   let foto='';if(needsPhoto(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
+  c.claudeT=Date.parse(d.fecha)||Date.now(); // ficha completada por Claude (para la etiqueta)
   res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}${extra}`)}
  // Duplicados: se fusiona el que sobra en el que se conserva (datos, equipamiento, foto, fuentes y notas) y se borra.
  const pares=(Array.isArray(d.duplicados)?d.duplicados:[]).map(x=>({q:findCar(x.quitar),c:findCar(x.conservar)})).filter(p=>p.q&&p.c&&p.q!==p.c);
@@ -1030,7 +1036,7 @@ async function importFichasFile(file){if(!file)return;let d;
    NUM.forEach(([k])=>{if(num(c[k])==null&&num(q[k])!=null){c[k]=q[k];if(q.fsrc&&q.fsrc[k])c.fsrc[k]=q.fsrc[k]}});
    c.eq=c.eq||{};Object.entries(q.eq||{}).forEach(([k,v])=>{if(typeof c.eq[k]!=='boolean'&&typeof v==='boolean')c.eq[k]=v});
    if(!officialImg(c)&&officialImg(q)){c.img=q.img;c.imgSrc=q.imgSrc}
-   if(!hasCurve(c)&&Array.isArray(q.curva)){c.curva=q.curva;c.curvaSrc=q.curvaSrc}if(!c.optCarga&&q.optCarga)c.optCarga=q.optCarga;if(!c.bateria&&q.bateria)c.bateria=q.bateria;
+   if(!hasCurve(c)&&Array.isArray(q.curva)){c.curva=q.curva;c.curvaSrc=q.curvaSrc}if(!c.optCarga&&q.optCarga)c.optCarga=q.optCarga;if(!c.bateria&&q.bateria)c.bateria=q.bateria;if(q.claudeT&&!c.claudeT)c.claudeT=q.claudeT;
    c.src=[...(c.src||[]),...(q.src||[]).filter(s=>!(c.src||[]).some(x=>x.url===s.url))];
    c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
    S.cars=S.cars.filter(x=>x!==q);/* borrado permanente: otro dispositivo que aún tenga la copia no puede resucitarla */S.del[String(q.id)]=9e15;snapC.delete(String(q.id));S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
