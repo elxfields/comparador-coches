@@ -28,6 +28,7 @@ button.tab{border-radius:8px 8px 0 0}button.tab.on{background:var(--ac);color:#f
 .g label,.eqg label{display:flex;flex-direction:column;font-size:12px;color:var(--mu);gap:2px}.g input,.g select{width:100%}
 .eqg{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
 .eqg label.row{flex-direction:row;align-items:center;gap:6px;color:var(--tx);font-size:13px}
+.wg{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:6px 22px}.wrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 22px;align-items:center;gap:8px;font-size:13px;color:var(--fg,inherit)}.wrow .wn{display:flex;flex-direction:column;line-height:1.2}.wrow input[type=range]{width:100%;accent-color:var(--ac);padding:0}.wrow b{text-align:right}.wsec{border:1px solid var(--bd);border-radius:8px;padding:6px 10px;margin:6px 0}.wsec summary{cursor:pointer;font-weight:600;font-size:14px}.wl{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));gap:0 22px;margin-top:4px}.wrow2{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--bd)}.wrow2.off>span:first-child{opacity:.6}.stars{white-space:nowrap;flex:none}.stars button{background:none;border:0;padding:0 1px;margin:0;font-size:20px;line-height:1;color:var(--bd);cursor:pointer;min-width:0;box-shadow:none}.stars button.on{color:#f5b301}.stars button:hover{transform:scale(1.15)}.parts{display:flex;gap:3px;align-items:flex-end;height:22px}.parts i{display:block;width:7px;background:var(--ac);border-radius:2px 2px 0 0;opacity:.85}
 .bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:13px}.bar .l{width:170px;flex:none;display:flex;align-items:center;gap:5px;min-width:0}.bar .l .ln{overflow:hidden;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15;font-size:12px;overflow-wrap:anywhere}
 .bar .t{flex:1;background:var(--bg);border-radius:6px;height:20px}.bar .f{height:100%;border-radius:6px;background:var(--ac);min-width:2px}.bar .v{width:90px;flex:none;text-align:right;color:var(--mu)}
 .mu{color:var(--mu);font-size:12px}.best{color:var(--ok);font-weight:700}.bar .v{white-space:nowrap}@media (max-width:520px){.bar .l{width:120px}.bar .v{width:70px}}.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}.cc{border:1px solid var(--bd);border-radius:10px;padding:10px;min-width:0}.cc h4{margin:0 0 6px;font-size:13px}.tray{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:8px 0}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:20px;padding:3px 4px;font-size:12px;max-width:100%}.chip .cn{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chip button{border:none;background:none;padding:0 4px}.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:8px;margin-top:4px}.bcard{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;text-align:center}.bcard.on{border-color:var(--ac)}.logo{width:62px;height:62px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;padding:7px;flex:none}.logo.sm{width:34px;height:34px;padding:4px;border-radius:8px}.logo img{max-width:100%;max-height:100%;object-fit:contain}.logo .ini{font-weight:700;color:#333;align-items:center;justify-content:center}.bn{font-weight:600}.pickhead{display:flex;align-items:center;gap:10px;margin:6px 0 10px}.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}.mcard{display:flex;flex-direction:column;align-items:stretch;text-align:left;padding:0 0 8px;border-radius:12px;border-width:2px;overflow:hidden;gap:2px}.mcard.on{border-color:var(--ac)}.mcard .ph{position:relative;display:block;aspect-ratio:16/9;background:var(--card)}.mcard .ph img{width:100%;height:100%;object-fit:cover;display:block}.mcard .noimg{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:32px;opacity:.4}.mcard .tick{position:absolute;top:6px;right:6px;background:var(--ac);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:700}.mcard .mn,.mcard .mu{padding:0 8px}.mn{font-weight:600;margin-top:4px}@media (max-width:520px){.mgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.bgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.mcard .mu{font-size:11px}}.cmpwrap{max-height:82vh;overflow:auto;border-radius:8px}#cmp tr:first-child th{position:sticky;top:0;z-index:3;background:var(--card);box-shadow:0 1px 0 var(--bd)}#cmp tr>:first-child:not([colspan]){position:sticky;left:0;z-index:2;background:var(--card);white-space:normal;min-width:130px}#cmp tr:first-child>:first-child{z-index:4}@media (max-width:520px){#cmp th img{width:120px!important;height:68px!important}#cmp tr:first-child th{min-width:124px!important}#cmp tr>:first-child:not([colspan]){min-width:96px;max-width:112px;font-size:12px}}.pg{display:none}.pg.on{display:block}
@@ -82,10 +83,9 @@ a{color:var(--ac)}
 <div id="cmpcharts"></div><p class="mu">En verde, el mejor valor de cada fila.</p><div class="sc cmpwrap"><table id="cmp"></table></div></div>
 
 <div class="pg" id="pg-rank">
-<p class="mu">Se puntúan los coches que pasan los filtros. Cada parámetro numérico se normaliza entre el peor y el mejor de ese grupo; un dato que falta se ignora. En equipamiento, lo que falta o es «No» suma 0. Pon peso 0 a lo que no te importe.</p>
+<p class="mu">Se puntúan los coches que pasan los filtros. Cada parámetro numérico se normaliza entre el peor y el mejor de ese grupo; un dato que falta se ignora. En equipamiento, lo que falta o es «No» suma 0. Cada apartado da su nota (0-100) y la puntuación final es la media de los apartados según su importancia.</p>
 <div class="sc"><table id="rank"></table></div>
-<details class="box" style="margin-top:12px"><summary>Pesos de parámetros (0-10)</summary><div id="wn" class="g" style="margin-top:8px"></div></details>
-<details class="box"><summary>Pesos de equipamiento (0-10)</summary><div id="we" class="g" style="margin-top:8px"></div></details>
+<details class="box" style="margin-top:12px" open><summary>Pesos del ranking</summary><div id="wts" style="margin-top:8px"></div></details>
 </div>
 
 <div class="pg" id="pg-chart">
@@ -130,7 +130,7 @@ a{color:var(--ac)}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-24.8';
+const APP_VER='2026-11-28.1';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -728,7 +728,7 @@ const newId=()=>Date.now()*1000+Math.floor(Math.random()*1000);
 // Huellas del último estado conocido: si algo cambia, se le pone la hora (u) para saber qué versión es más nueva.
 let snapC=new Map(),snapCfg='',snapQ=new Map();
 const sansU=o=>{const r=Object.assign({},o);delete r.u;return JSON.stringify(r)};
-const cfgKey=()=>JSON.stringify([S.pr,S.trips,S.wN,S.wE,S.routes,S.rp]);
+const cfgKey=()=>JSON.stringify([S.pr,S.trips,S.wN,S.wE,S.wG||{},S.routes,S.rp]);
 function snapAll(){snapC=new Map(S.cars.map(c=>[String(c.id),sansU(c)]));snapCfg=cfgKey();snapQ=new Map(Q.items.map(x=>[x.yt,sansU(x)]))}
 function trackAll(){const now=Date.now();let ch=false;S.del=S.del||{};Q.qdel=Q.qdel||{};
  const seen=new Set();S.cars.forEach(c=>{const k=String(c.id),v=sansU(c);seen.add(k);if(snapC.get(k)!==v){c.u=now;snapC.set(k,v);ch=true}});
@@ -737,10 +737,10 @@ function trackAll(){const now=Date.now();let ch=false;S.del=S.del||{};Q.qdel=Q.q
  const sq=new Set();Q.items.forEach(x=>{const v=sansU(x);sq.add(x.yt);if(snapQ.get(x.yt)!==v){x.u=now;snapQ.set(x.yt,v);ch=true}});
  [...snapQ.keys()].forEach(k=>{if(!sq.has(k)){Q.qdel[k]=now;snapQ.delete(k);ch=true}});
  return ch}
-const localDoc=()=>({v:1,cars:S.cars,del:S.del||{},cfg:{pr:S.pr,trips:S.trips,wN:S.wN,wE:S.wE,routes:S.routes,rp:S.rp,t:S.cfgT||0},queue:Q.items,qdel:Q.qdel||{}});
+const localDoc=()=>({v:1,cars:S.cars,del:S.del||{},cfg:{pr:S.pr,trips:S.trips,wN:S.wN,wE:S.wE,wG:S.wG||{},routes:S.routes,rp:S.rp,t:S.cfgT||0},queue:Q.items,qdel:Q.qdel||{}});
 function applyDoc(d){const cur=qBusy?Q.items.find(x=>x.st==='proc'&&x.by===DEV):null;
  S.cars=d.cars;S.del=d.del;
- if(d.cfg&&(d.cfg.t||0)>(S.cfgT||0)){S.pr=d.cfg.pr;S.trips=d.cfg.trips;S.wN=d.cfg.wN;S.wE=d.cfg.wE;if(d.cfg.routes)S.routes=d.cfg.routes;if(d.cfg.rp)S.rp=Object.assign({},DEF_RP,d.cfg.rp);S.cfgT=d.cfg.t}
+ if(d.cfg&&(d.cfg.t||0)>(S.cfgT||0)){S.pr=d.cfg.pr;S.trips=d.cfg.trips;S.wN=d.cfg.wN;S.wE=d.cfg.wE;S.wG=d.cfg.wG||{};if(d.cfg.routes)S.routes=d.cfg.routes;if(d.cfg.rp)S.rp=Object.assign({},DEF_RP,d.cfg.rp);S.cfgT=d.cfg.t}
  Q.items=d.queue;Q.qdel=d.qdel;
  if(cur){const i=Q.items.findIndex(x=>x.yt===cur.yt);if(i>=0)Q.items[i]=cur}}
 let syncing=false,syncAgain=false,syncT=null,syMsg='',syOk=0;
@@ -889,16 +889,40 @@ function renderCompare(){renderPick();const cars=S.sel.map(byId).filter(Boolean)
 
 /* ---- ranking ---- */
 function scoreList(L){const rng={};ALLN.forEach(n=>{const v=L.map(c=>val(c,n[0])).filter(x=>x!=null);rng[n[0]]=v.length?[Math.min(...v),Math.max(...v)]:null});
- const eqW=EQ.filter(e=>(S.wE[e[0]]||0)>0);
- return L.map(c=>{let s=0,w=0;
-  ALLN.forEach(n=>{const wt=S.wN[n[0]]||0,v=val(c,n[0]),r=rng[n[0]];if(!n[4]||!wt||v==null||!r)return;const x=r[1]===r[0]?1:(v-r[0])/(r[1]-r[0]);s+=wt*(n[4]==='high'?x:1-x);w+=wt});
-  eqW.forEach(e=>{const wt=S.wE[e[0]];w+=wt;if(c.eq&&c.eq[e[0]]===true)s+=wt});
-  return{c,s:w?100*s/w:null}}).sort((a,b)=>(b.s??-1)-(a.s??-1))}
+ const secs=WSEC();
+ return L.map(c=>{let tot=0,tw=0;const parts={};
+  secs.forEach(sec=>{const gw=gW(sec.g);if(!gw)return;let s=0,w=0;
+   sec.items.forEach(it=>{const wt=wOf(it);if(!wt)return;
+    if(it.eq){w+=wt;if(c.eq&&c.eq[it.k]===true)s+=wt;return}
+    const v=val(c,it.k),r=rng[it.k];if(v==null||!r)return;const x=r[1]===r[0]?1:(v-r[0])/(r[1]-r[0]);s+=wt*(it.dir==='high'?x:1-x);w+=wt});
+   if(w){parts[sec.g]=100*s/w;tot+=gw*s/w;tw+=gw}});
+  return{c,s:tw?100*tot/tw:null,parts}}).sort((a,b)=>(b.s??-1)-(a.s??-1))}
 function renderRank(){const L=filt();
- $('rank').innerHTML=L.length?'<tr><th>#</th><th></th><th>Coche</th><th>Puntuación</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L.map(withMech)).map((r,i)=>`<tr><td><b>${i+1}</b></td><td>${thumb(r.c,56,32)}</td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join(''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
-function renderWeights(){
- $('wn').innerHTML=ALLN.filter(n=>n[4]).map(n=>`<label>${n[1]}<input type="number" min="0" max="10" value="${S.wN[n[0]]||0}" onchange="S.wN['${n[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('');
- $('we').innerHTML=EQ.map(e=>`<label>${esc(e[1])}<input type="number" min="0" max="10" value="${S.wE[e[0]]||0}" onchange="S.wE['${e[0]}']=+this.value;save();renderRank();renderChart()"></label>`).join('')}
+ const used=WSEC().filter(sec=>gW(sec.g)>0&&sec.items.some(it=>wOf(it)>0)).map(sec=>sec.g);
+ const partsHtml=p=>`<span class="parts">${used.map(g=>p[g]==null?`<i style="height:2px;background:var(--bd)" title="${esc(g)}: sin datos"></i>`:`<i style="height:${Math.max(2,p[g]*0.22)}px" title="${esc(g)}: ${Math.round(p[g])}"></i>`).join('')}</span>`;
+ $('rank').innerHTML=L.length?'<tr><th>#</th><th></th><th>Coche</th><th>Puntuación</th><th title="Nota de cada apartado (pasa el ratón por encima)">Por apartado</th><th>Datos</th><th>Precio €</th><th>€/100 km</th></tr>'+scoreList(L.map(withMech)).map((r,i)=>`<tr><td><b>${i+1}</b></td><td>${thumb(r.c,56,32)}</td><td><a href="#" onclick="openEdit(${r.c.id});S.tab='base';renderTabs();return false">${esc(nm(r.c))}</a></td><td><b>${r.s==null?'–':r.s.toFixed(1)}</b></td><td>${partsHtml(r.parts)}</td><td>${completeness(r.c)}%</td><td>${fmt(r.c.precio)}</td><td>${fmt(val(r.c,'coste100'))}</td></tr>`).join('')+(used.length?`<tr><td colspan="8" class="mu" style="white-space:normal">Barras de «Por apartado», en orden: ${used.map(esc).join(' · ')}</td></tr>`:''):'<tr><td>Ningún coche pasa los filtros.</td></tr>'}
+/* ---- pesos del ranking: estrellas por parámetro (0-5, se guardan como 0-10) y deslizador por apartado (0-10) ---- */
+const WDEF={wN:{precio:8,coste100:8,mal:6,rango:6,kwh100Real:6,cv:4,qInt:6,confort:6},wE:{acc:6,aeb:8},wG:{}};
+const secName=g=>g==='General'||g==='Derivado'?'Precio y general':g;
+function WSEC(){const L=[];ALLN.filter(n=>n[4]).forEach(n=>{const g=secName(n[3]);let s=L.find(x=>x.g===g);if(!s){s={g,items:[]};L.push(s)}s.items.push({k:n[0],l:n[1]+(n[2]?' ('+n[2]+')':''),eq:false,dir:n[4]})});
+ [...new Set(EQ.map(e=>e[2]))].forEach(cat=>L.push({g:'Equipamiento: '+cat,items:EQ.filter(e=>e[2]===cat).map(e=>({k:e[0],l:e[1],eq:true}))}));return L}
+const wOf=it=>(it.eq?S.wE:S.wN)[it.k]||0;
+const gW=g=>S.wG&&S.wG[g]!=null?+S.wG[g]:5;
+const starsOf=v=>Math.round((v||0)/2);
+function starsHtml(it){const v=starsOf(wOf(it));return `<span class="stars" role="radiogroup" aria-label="${esc(it.l)}">`+[1,2,3,4,5].map(i=>`<button type="button" class="${i<=v?'on':''}" title="${i} de 5${i===v?' (pulsa otra vez para quitar)':''}" onclick="setW(this,'${it.eq?'E':'N'}','${it.k}',${i})">★</button>`).join('')+'</span>'}
+function setW(btn,t,k,i){const m=t==='E'?S.wE:S.wN,cur=starsOf(m[k]),nv=cur===i?0:i;if(nv)m[k]=nv*2;else delete m[k];
+ const box=btn.parentNode;[...box.children].forEach((b,j)=>{b.className=j<nv?'on':'';b.title=`${j+1} de 5${j+1===nv?' (pulsa otra vez para quitar)':''}`});
+ const row=box.closest('.wrow2');if(row)row.classList.toggle('off',!nv);updWCounts();save();renderRank();renderChart()}
+function setG(i,v){const sec=WSEC()[i];if(!sec)return;S.wG=S.wG||{};S.wG[sec.g]=+v;save();renderRank();renderChart()}
+function resetW(def){S.wN=def?Object.assign({},WDEF.wN):{};S.wE=def?Object.assign({},WDEF.wE):{};S.wG={};save();renderWeights();renderRank();renderChart()}
+function updWCounts(){WSEC().forEach((sec,i)=>{const n=sec.items.filter(it=>wOf(it)>0).length,t=`${n} de ${sec.items.length}`;document.querySelectorAll(`[data-wc="${i}"]`).forEach(e=>e.textContent=t)})}
+function renderWeights(){const box=$('wts');if(!box)return;const secs=WSEC();
+ box.innerHTML=`<h3 style="margin-top:4px">Importancia de cada apartado</h3><p class="mu">Cuánto cuenta cada bloque en la puntuación final, tenga los parámetros que tenga. En 0 no cuenta.</p><div class="wg">`+
+  secs.map((sec,i)=>`<label class="wrow"><span class="wn">${esc(sec.g)}<small class="mu" data-wc="${i}"></small></span><input type="range" min="0" max="10" step="1" value="${gW(sec.g)}" oninput="this.nextElementSibling.textContent=this.value" onchange="setG(${i},this.value)"><b>${gW(sec.g)}</b></label>`).join('')+'</div>'+
+  `<h3>Parámetros</h3><p class="mu">Más estrellas = más peso dentro de su apartado. Pulsa la misma estrella otra vez para quitarlo (sin estrellas no cuenta).</p>`+
+  secs.map((sec,i)=>`<details class="wsec" ${sec.items.some(it=>wOf(it)>0)?'open':''}><summary>${esc(sec.g)} <small class="mu" data-wc="${i}"></small></summary><div class="wl">${sec.items.map(it=>`<div class="wrow2 ${wOf(it)>0?'':'off'}"><span>${esc(it.l)}${it.dir?` <small class="mu">${it.dir==='high'?'↑ mejor más':'↓ mejor menos'}</small>`:''}</span>${starsHtml(it)}</div>`).join('')}</div></details>`).join('')+
+  `<p style="margin-top:10px"><button onclick="resetW(1)">Valores por defecto</button> <button onclick="if(confirm('¿Quitar todos los pesos?'))resetW(0)">Quitar todos</button></p>`;
+ updWCounts()}
 
 /* ---- gráficos (agrupados por tema; todos los de un grupo en la misma pantalla) ---- */
 const nSpec=k=>{const n=ALLN.find(x=>x[0]===k);return n?{t:n[1]+(n[2]?' ('+n[2]+')':''),dir:n[4]||'low',get:c=>val(c,k)}:null};
