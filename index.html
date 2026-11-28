@@ -460,7 +460,7 @@ section .cc,details.box .cc{box-shadow:none}
 
 <script>
 // Versión de la app: cámbiala en cada publicación. Las ventanas abiertas la comparan con la publicada y se recargan solas.
-const APP_VER='2026-11-28.7';
+const APP_VER='2026-11-28.8';
 const T=['BEV','PHEV','HEV','Gasolina','Diésel'];
 // [clave, etiqueta, unidad, grupo, dirección (low/high/null)]
 const NUM=[
@@ -1020,7 +1020,7 @@ function exportForClaude(){if(!S.cars.length){$('mlog').textContent='No hay coch
 async function importFichasFile(file){if(!file)return;let d;
  try{d=JSON.parse(await file.text())}catch(e){$('mlog').textContent='Ese archivo no es un JSON válido.';return}
  if(!d||d.tipo!=='comparador-coches/fichas'||!Array.isArray(d.fichas)){$('mlog').textContent='Ese archivo no es de fichas de Claude («fichas-claude.json»).';return}
- $('mlog').textContent='Importando fichas…';const res=[],noEnc=[];
+ $('mlog').textContent='Importando fichas…';const res=[],noEnc=[],fixes=[];
  const mm=o=>[o.marca,o.modelo].map(x=>String(x||'').toLowerCase().trim()).join('|');
  // Se busca por id solo si coinciden también marca y modelo; si no, por marca+modelo+versión.
  const findCar=f=>{if(!f)return null;let c=byId(f.id);if(c&&mm(c)!==mm(f))c=null;return c||S.cars.find(x=>keyOf(x)===keyOf(f))||null};
@@ -1035,12 +1035,15 @@ async function importFichasFile(file){if(!file)return;let d;
   let extra='';if(Array.isArray(f.curva)&&f.curva.length>=3&&f.curva.every(p=>Array.isArray(p)&&num(p[0])!=null&&num(p[1])!=null)){c.curva=f.curva.map(p=>[+p[0],+p[1]]).sort((a,b)=>a[0]-b[0]);c.curvaSrc=typeof f.curvaSrc==='string'&&/^https?:\/\//.test(f.curvaSrc)?f.curvaSrc:'';extra=', curva de carga'}
   if(Array.isArray(f.optCarga)&&f.optCarga.length===2&&f.optCarga.every(v=>num(v)!=null))c.optCarga=f.optCarga.map(Number);
   if(typeof f.bateria==='string'&&f.bateria)c.bateria=f.bateria.slice(0,40);
-  if(TRL[f.trac])c.trac=f.trac;if(typeof f.motor==='string'&&f.motor.trim())c.motor=f.motor.trim().slice(0,60);
+  if(TRL[f.trac])c.trac=f.trac;if(!c.t&&normT(f.t))c.t=normT(f.t);
+  if(f.corrige&&typeof f.corrige==='object')fixes.push({c,o:f.corrige,fu});if(typeof f.motor==='string'&&f.motor.trim())c.motor=f.motor.trim().slice(0,60);
   let foto='';if(needsPhoto(c)&&typeof f.img==='string'&&/^https:\/\//.test(f.img)&&!/ytimg|youtube/.test(f.img)&&await testImg(f.img)){c.img=f.img;c.imgSrc=f.img.replace(/^https?:\/\/(www\.)?/,'').split('/')[0];foto=', foto'}
   c.notas=c.notas||[];(Array.isArray(f.notas)?f.notas:[]).slice(0,8).forEach(t=>{if(typeof t==='string'&&t){t='[Claude, web] '+t;if(!c.notas.includes(t))c.notas.push(t)}});
   c.claudeT=Date.parse(d.fecha)||Date.now(); // ficha completada por Claude (para la etiqueta)
   res.push(`${nm(c)}: ${n} datos, ${e} equipamientos${foto}${extra}`)}
  // Duplicados: se fusiona el que sobra en el que se conserva (datos, equipamiento, foto, fuentes y notas) y se borra.
+ // Correcciones: datos erróneos (por ejemplo, de un vídeo) que Claude ha comprobado. Se aplican tras fusionar duplicados; null borra el dato.
+ const applyFixes=()=>fixes.forEach(({c,o,fu})=>{const ch=[];c.fsrc=c.fsrc||{};Object.entries(o).forEach(([k,v])=>{if(!NUM.some(x=>x[0]===k)||!S.cars.includes(c))return;const old=num(c[k]);if(v===null){if(old!=null){delete c[k];delete c.fsrc[k];ch.push(`${k}: ${old} → (borrado)`)}return}v=num(v);if(v==null||v===old)return;c[k]=v;c.fsrc[k]=typeof fu[k]==='string'&&/^https?:\/\//.test(fu[k])?fu[k]:'web';ch.push(`${k}: ${old??'–'} → ${v}`)});if(ch.length)res.push(`Corregido en ${nm(c)}: ${ch.join(', ')}`)});
  const pares=(Array.isArray(d.duplicados)?d.duplicados:[]).map(x=>({q:findCar(x.quitar),c:findCar(x.conservar)})).filter(p=>p.q&&p.c&&p.q!==p.c);
  if(pares.length&&confirm(`Fusionar y quitar ${pares.length} coche${pares.length>1?'s':''} duplicado${pares.length>1?'s':''}:\n\n`+pares.map(p=>`• «${nm(p.q)}» → se integra en «${nm(p.c)}»`).join('\n')+'\n\n¿Seguir?')){
   pares.forEach(({q,c})=>{c.fsrc=c.fsrc||{};
@@ -1052,7 +1055,7 @@ async function importFichasFile(file){if(!file)return;let d;
    c.notas=[...new Set([...(c.notas||[]),...(q.notas||[])])];
    S.cars=S.cars.filter(x=>x!==q);/* borrado permanente: otro dispositivo que aún tenga la copia no puede resucitarla */S.del[String(q.id)]=9e15;snapC.delete(String(q.id));S.sel=[...new Set(S.sel.map(id=>id===q.id?c.id:id))];if(S.edit===q.id)S.edit=c.id;
    res.push(`Duplicado fusionado: «${nm(q)}» → «${nm(c)}»`)})}
- save();renderAll();
+ applyFixes();save();renderAll();
  $('mlog').innerHTML=`<b>Fichas importadas</b> (${res.length})${syOn()?' · se sincronizan con tus otros dispositivos':''}<br>`+res.map(esc).join('<br>')+(noEnc.length?`<br>No encontrados en tu base: ${noEnc.map(esc).join(', ')}`:'')}
 
 const QST={pend:['⏳','Pendiente'],proc:['⚙️','Procesando'],ok:['✅','Hecho'],err:['❌','Error'],skip:['⏭️','Saltado']};
